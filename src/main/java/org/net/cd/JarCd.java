@@ -8,11 +8,14 @@ import org.net.util.Assert;
 import org.net.util.PropertyPlaceholderHelper;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Jar持续部署
@@ -30,16 +33,26 @@ public class JarCd extends AbstractCd {
     private File jpsScriptFile;
     private File startupScriptFile;
     private File shutdownScriptFile;
+    private File clearFile;
 
     private JarCd() {
     }
 
+    private void clear() throws Exception {
+        log.debug("准备清除上一个版本信息 ...");
+        String cmd = "./clear.sh";
+        ssh.execute(cmd, resultConsumer(cmd));
+        log.debug("已清除上一个版本信息!");
+    }
+
     private void initScript() throws Exception {
+        log.debug("准备初始化脚本 ...");
         // 校验脚本文件
-        String[] scriptPaths = {"cd/jar/jps.sh", "cd/jar/startup.sh", "cd/jar/shutdown.sh"};
+        String[] scriptPaths = {"cd/jar/jps.sh", "cd/jar/startup.sh", "cd/jar/shutdown.sh", "cd/jar/clear.sh"};
         Consumer<File>[] scriptFileConsumers = new Consumer[]{(Consumer<File>) file -> JarCd.this.jpsScriptFile = file,
                 (Consumer<File>) file -> JarCd.this.startupScriptFile = file,
-                (Consumer<File>) file -> JarCd.this.shutdownScriptFile = file};
+                (Consumer<File>) file -> JarCd.this.shutdownScriptFile = file,
+                (Consumer<File>) file -> JarCd.this.clearFile = file};
         for (int i = 0, length = scriptPaths.length; i < length; i++) {
             String scriptPath = scriptPaths[i];
             URL scriptUrl = this.getClass().getClassLoader().getResource(scriptPath);
@@ -58,15 +71,19 @@ public class JarCd extends AbstractCd {
 
         // 初始化脚本文件
         String content = null;
-        File[] scriptFiles = {jpsScriptFile, startupScriptFile, shutdownScriptFile};
+        File[] scriptFiles = {jpsScriptFile, startupScriptFile, shutdownScriptFile, clearFile};
         for (File scriptFile : scriptFiles) {
             content = FileUtils.readFileToString(scriptFile, StandardCharsets.UTF_8);
             content = propertyPlaceholderHelper.replacePlaceholders(content, placeholderMap::get);
             FileUtils.write(scriptFile, content, StandardCharsets.UTF_8);
         }
+
+        log.debug("已初始化脚本!");
     }
 
-    public void uploadScript() throws Exception {
+    private void uploadScript() throws Exception {
+        log.debug("准备上传脚本 ...");
+
         // jps.sh
         sftp.put(jpsScriptFile.getAbsolutePath(), "jps.sh", DefaultSftpProgressMonitor.builder().build(), FileTransferMode.OVERWRITE);
         ssh.execute("chmod +x jps.sh");
@@ -78,45 +95,35 @@ public class JarCd extends AbstractCd {
         // shutdown.sh
         sftp.put(shutdownScriptFile.getAbsolutePath(), "shutdown.sh", DefaultSftpProgressMonitor.builder().build(), FileTransferMode.OVERWRITE);
         ssh.execute("chmod +x shutdown.sh");
+
+        // clear.sh
+        sftp.put(clearFile.getAbsolutePath(), "clear.sh", DefaultSftpProgressMonitor.builder().build(), FileTransferMode.OVERWRITE);
+        ssh.execute("chmod +x clear.sh");
+
+        log.debug("已上传脚本!");
     }
 
-    public void shutdown() throws Exception {
-        String cmd = "./shutdown.sh";
-        ssh.execute(cmd, resultConsumer(cmd));
-    }
-
-    public void deleteJar() throws Exception {
-        String cmd = String.format("rm -rf ./logs ./%s", jarName);
-        ssh.execute(cmd, resultConsumer(cmd));
-    }
-
-    public void uploadJar() throws Exception {
+    private void uploadJar() throws Exception {
+        log.debug("准备上传jar文件 ...");
         sftp.put(jarFile.getAbsolutePath(), jarName, DefaultSftpProgressMonitor.builder().build(), FileTransferMode.OVERWRITE);
+        log.debug("已上传jar文件!");
     }
 
-    public void startup() throws Exception {
+    private void startup() throws Exception {
+        log.debug("准备启动java应用({}) ...", jarName);
         String cmd = "./startup.sh";
         ssh.execute(cmd, resultConsumer(cmd));
-    }
-
-    public void deleteScript() throws Exception {
-        String[] paths = {"./startup.sh", "./shutdown.sh", "./jps.sh"};
-        for (String path : paths) {
-            sftp.rm(path);
-            log.debug("rm {}", path);
-        }
+        log.debug("已启动java应用!");
     }
 
     @Override
     public void execute() throws Exception {
         cdWorkDir();
+        clear();
         initScript();
         uploadScript();
-        shutdown();
-        deleteJar();
         uploadJar();
         startup();
-        deleteScript();
     }
 
     public static Builder builder() {
