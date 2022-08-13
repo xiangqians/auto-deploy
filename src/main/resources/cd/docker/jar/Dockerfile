@@ -6,7 +6,10 @@ USER root
 
 # 自定义镜像的时间格式与时区
 #RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo 'Asia/Shanghai' > /etc/timezone
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo '$TZ' > /etc/timezone
+#RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo '$TZ' > /etc/timezone
+#RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime RUN echo "Asia/Shanghai" > /etc/timezone
+RUN cp -f /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
 
 # 创建java应用目录
 RUN mkdir -p /opt/application
