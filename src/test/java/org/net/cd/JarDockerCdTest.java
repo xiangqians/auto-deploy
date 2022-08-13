@@ -21,7 +21,7 @@ public class JarDockerCdTest {
                     .workDir("test")
                     .filePaths("E:\\workspace\\idea-my\\jar-tmp\\out\\artifacts\\jar_tmp_jar\\jar-tmp.jar",
                             "C:\\Users\\xiangqian\\Desktop\\repository\\net")
-                    .name("org_test")
+                    .name("test")
                     .t("org/test:v2022.8")
                     .p("8080:8080")
                     .build();

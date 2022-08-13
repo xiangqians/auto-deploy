@@ -53,6 +53,9 @@ public class CompressionUtils {
         }
     }
 
+    public static void unGz() {
+    }
+
     /**
      * gz
      *

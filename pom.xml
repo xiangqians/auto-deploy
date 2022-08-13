@@ -39,9 +39,19 @@
 
         <!-- jgit -->
         <jgit.version>6.2.0.202206071550-r</jgit.version>
+
+        <!-- nashorn-core -->
+        <nashorn-core.version>15.4</nashorn-core.version>
     </properties>
 
     <dependencies>
+
+        <!-- nashorn-core，JavaScript引擎 -->
+        <dependency>
+            <groupId>org.openjdk.nashorn</groupId>
+            <artifactId>nashorn-core</artifactId>
+            <version>${nashorn-core.version}</version>
+        </dependency>
 
         <!-- jgit -->
         <dependency>

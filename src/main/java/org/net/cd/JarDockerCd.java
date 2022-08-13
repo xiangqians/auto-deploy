@@ -2,30 +2,36 @@ package org.net.cd;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.net.sftp.FileTransferMode;
 import org.net.sftp.impl.DefaultSftpProgressMonitor;
 import org.net.util.Assert;
 import org.net.util.CompressionUtils;
+import org.net.util.JavaScriptUtils;
 import org.net.util.PropertyPlaceholderHelper;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Docker持续部署
  * https://hub.docker.com/
  * <p>
  * 以root用户进入docker容器
- * $ sudo docker exec -it -u root [id] /bin/bash
+ * $ sudo docker exec -it -u root [CONTAINER ID | CONTAINER NAME] /bin/bash
+ * <p>
+ * $ docker inspect [CONTAINER ID]
+ * $ cd [${MergedDir}]
  *
  * @author xiangqian
  * @date 23:49 2022/07/27
@@ -33,8 +39,7 @@ import java.util.function.Consumer;
 @Slf4j
 public class JarDockerCd extends AbstractCd {
 
-    private String[] fileNames;
-    private File[] files;
+    private List<File> files;
 
     // --tag, -t: 镜像的名字及标签，通常 name:tag 或者 name 格式。
     private String t;
@@ -80,7 +85,8 @@ public class JarDockerCd extends AbstractCd {
         }
 
         String jarName = null;
-        for (String fileName : fileNames) {
+        for (File file : files) {
+            String fileName = file.getName();
             if (fileName.endsWith(".jar")) {
                 jarName = fileName;
                 break;
@@ -91,18 +97,60 @@ public class JarDockerCd extends AbstractCd {
         // 定义以 "${" 开头，以 "}" 结尾的占位符
         PropertyPlaceholderHelper propertyPlaceholderHelper = new PropertyPlaceholderHelper("${", "}");
         Map<String, String> placeholderMap = new HashMap<>();
-        placeholderMap.put("FILE_NAMES", StringUtils.join(fileNames, " "));
+        placeholderMap.put("FILE_NAMES", StringUtils.join(files.stream().map(File::getName).collect(Collectors.toList()), " "));
         placeholderMap.put("JAR_NAME", jarName);
         placeholderMap.put("ABSOLUTE_WORK_DIR", absoluteWorkDir);
         placeholderMap.put("TAG", t);
         placeholderMap.put("NAME", name);
 
         // 初始化脚本文件
-        String content = null;
+        StringBuilder content = new StringBuilder();
         File[] scriptFiles = {dockerfileFile, clearFile};
         for (File scriptFile : scriptFiles) {
-            content = FileUtils.readFileToString(scriptFile, StandardCharsets.UTF_8);
-            content = propertyPlaceholderHelper.replacePlaceholders(content, placeholderMap::get);
+            content.setLength(0);
+            BufferedReader br = null;
+            try {
+                br = new BufferedReader(new FileReader(scriptFile));
+                String line = null;
+                while (Objects.nonNull(line = br.readLine())) {
+                    line = propertyPlaceholderHelper.replacePlaceholders(line, placeholderMap::get);
+                    if (line.startsWith("JS \"")) {
+                        Function<String, String> preFunction = script -> {
+                            if (script.endsWith("\\") || script.endsWith("\"")) {
+                                script = script.substring(0, script.length() - 1);
+                            }
+                            return script.replace(" out(", "result.push(");
+                        };
+                        StringBuilder jsScriptBuilder = new StringBuilder();
+                        jsScriptBuilder.append("function execute(){").append('\n');
+                        jsScriptBuilder.append('\t').append("var result = [];").append('\n');
+                        jsScriptBuilder.append('\t').append(preFunction.apply(line.substring("JS \"".length()))).append('\n');
+                        if (!line.endsWith("\"")) {
+                            while (Objects.nonNull(line = br.readLine())) {
+                                jsScriptBuilder.append(preFunction.apply(line)).append('\n');
+                                if (line.endsWith("\"")) {
+                                    break;
+                                }
+                            }
+                        }
+                        jsScriptBuilder.append('\t').append("return result;").append('\n');
+                        jsScriptBuilder.append("};").append('\n');
+                        jsScriptBuilder.append("execute();");
+
+                        List<Map<String, Object>> fileList = new ArrayList<>(files.size());
+                        for (File file : files) {
+                            fileList.add(Map.of("name", file.getName(), "isDir", file.isDirectory()));
+                        }
+                        List<Object> result = JavaScriptUtils.execute(jsScriptBuilder.toString(),
+                                Map.of("files", fileList), List.class);
+                        content.append(StringUtils.join(result, '\n')).append('\n');
+                        continue;
+                    }
+                    content.append(line).append('\n');
+                }
+            } finally {
+                IOUtils.closeQuietly(br);
+            }
             FileUtils.write(scriptFile, content, StandardCharsets.UTF_8);
         }
 
@@ -122,8 +170,8 @@ public class JarDockerCd extends AbstractCd {
         tempDirFile = new File(tempDirPath + File.separator + tempDirName);
         log.debug("tempDirFilePath: {}", tempDirFile.getAbsolutePath());
 
-		Assert.isTrue(!tempDirFile.exists(), String.format("%s 已存在此临时文件! (运气真好)", tempDirFile));
-		tempDirFile.mkdirs();
+        Assert.isTrue(!tempDirFile.exists(), String.format("%s 已存在此临时文件! (运气真好)", tempDirFile));
+        tempDirFile.mkdirs();
 
         // 将要上传的文件放入到临时目录中
         for (File file : files) {
@@ -198,8 +246,7 @@ public class JarDockerCd extends AbstractCd {
         ssh.execute(cmd, Duration.ofMinutes(30), resultConsumer(cmd));
         log.debug("构建镜像成功!");
     }
-	
-	
+
     /**
      * 启动镜像
      *
@@ -294,19 +341,16 @@ public class JarDockerCd extends AbstractCd {
             Assert.notNull(p = StringUtils.trimToNull(p), "-p不能为空!");
 
             int length = filePaths.length;
-            String[] fileNames = new String[length];
-            File[] files = new File[length];
+            List<File> files = new ArrayList<>(length);
             for (int i = 0; i < length; i++) {
                 String filePath = filePaths[i];
                 Assert.notNull(filePath, String.format("filePath[%s]不能为空!", i));
                 File file = new File(filePath);
                 Assert.isTrue(file.exists(), String.format("%s 文件或者文件夹不存在!", file));
-                fileNames[i] = file.getName();
-                files[i] = file;
+                files.add(file);
             }
 
             JarDockerCd jarDockerCd = super.build();
-            jarDockerCd.fileNames = fileNames;
             jarDockerCd.files = files;
             jarDockerCd.name = name;
             jarDockerCd.t = t;

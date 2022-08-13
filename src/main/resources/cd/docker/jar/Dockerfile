@@ -4,19 +4,28 @@ FROM openjdk:13
 # 以root执行
 USER root
 
-# 自定义镜像的时间格式与时区
+# 设置镜像的时间格式与时区
 #RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo 'Asia/Shanghai' > /etc/timezone
-#RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo '$TZ' > /etc/timezone
-#RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime RUN echo "Asia/Shanghai" > /etc/timezone
-RUN cp -f /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-
+#RUN cp -f /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 # 创建java应用目录
 RUN mkdir -p /opt/application
 
 # 将多个文件copy到 /tmp/目录下
 #COPY logback.xml xxx.jar /tmp/
-COPY ${FILE_NAMES} /opt/application/
+#COPY ${FILE_NAMES} /opt/application/
+# 将文件或文件夹拷贝到 /opt/application 目录下
+# 编译时将会注入files值
+JS "for (var i = 0, length = files.length; i < length; i++) { \
+        var file = files[i]; \
+        var isDir = file.isDir; \
+        var fileName = file.name; \
+        if (isDir) { \
+            out('COPY ' + fileName + ' /opt/application/' + fileName); \
+        } else { \
+            out('COPY ' + fileName + ' /opt/application/'); \
+        } \
+    };"
 
 # 暴露端口
 #EXPOSE 8080
