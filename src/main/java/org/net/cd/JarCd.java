@@ -2,12 +2,9 @@ package org.net.cd;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.io.FileUtils;
 import org.net.util.Assert;
-import org.net.util.PropertyPlaceholderHelper;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,25 +32,21 @@ public class JarCd extends AbstractCd {
 
     private void initScript() throws Exception {
         log.debug("准备初始化脚本 ...");
+
         // 校验脚本文件
         String[] scriptPaths = {"cd/jar/jps.sh", "cd/jar/startup.sh", "cd/jar/shutdown.sh", "cd/jar/clear.sh"};
         scriptFiles = checkScript(scriptPaths);
 
-        // 定义以 "${" 开头，以 "}" 结尾的占位符
-        PropertyPlaceholderHelper propertyPlaceholderHelper = new PropertyPlaceholderHelper("${", "}");
+        // 占位符参数
         Map<String, String> placeholderMap = new HashMap<>();
         placeholderMap.put("ABSOLUTE_WORK_DIR", absoluteWorkDir);
         placeholderMap.put("JAVA_HOME", javaHome);
         placeholderMap.put("JAR_PATH", String.format("%s/%s", absoluteWorkDir, jarFile.getName()));
         placeholderMap.put("JAR_NAME", jarFile.getName());
+        placeholderMap.put("FILES", getFilesPlaceholderValue());
 
-        // 初始化脚本文件
-        String content = null;
-        for (File scriptFile : scriptFiles) {
-            content = FileUtils.readFileToString(scriptFile, StandardCharsets.UTF_8);
-            content = propertyPlaceholderHelper.replacePlaceholders(content, placeholderMap::get);
-            FileUtils.write(scriptFile, content, StandardCharsets.UTF_8);
-        }
+        // 替换占位符
+        replacePlaceholders(scriptFiles, placeholderMap);
 
         log.debug("已初始化脚本!");
     }

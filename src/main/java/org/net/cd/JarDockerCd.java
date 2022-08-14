@@ -2,20 +2,14 @@ package org.net.cd;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.net.util.Assert;
-import org.net.util.JavaScriptUtils;
-import org.net.util.PropertyPlaceholderHelper;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.*;
-import java.util.function.Function;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -52,64 +46,18 @@ public class JarDockerCd extends AbstractCd {
         String[] scriptPaths = {"cd/docker/jar/Dockerfile", "cd/docker/jar/clear.sh"};
         scriptFiles = checkScript(scriptPaths);
 
-        // 定义以 "${" 开头，以 "}" 结尾的占位符
-        PropertyPlaceholderHelper propertyPlaceholderHelper = new PropertyPlaceholderHelper("${", "}");
+        // 占位符参数
         Map<String, String> placeholderMap = new HashMap<>();
         placeholderMap.put("FILE_NAMES", StringUtils.join(Arrays.stream(srcFiles).map(File::getName).collect(Collectors.toList()), " "));
         placeholderMap.put("JAR_NAME", jarFile.getName());
         placeholderMap.put("ABSOLUTE_WORK_DIR", absoluteWorkDir);
         placeholderMap.put("TAG", dockerBuild.tag());
         placeholderMap.put("NAME", dockerRun.name());
+        placeholderMap.put("FILES", getFilesPlaceholderValue());
+        placeholderMap.put("DOCKER_FILES", getFilesPlaceholderValue(srcFiles));
 
-        // 初始化脚本文件
-        StringBuilder content = new StringBuilder();
-        for (File scriptFile : scriptFiles) {
-            content.setLength(0);
-            BufferedReader br = null;
-            try {
-                br = new BufferedReader(new FileReader(scriptFile));
-                String line = null;
-                while (Objects.nonNull(line = br.readLine())) {
-                    line = propertyPlaceholderHelper.replacePlaceholders(line, placeholderMap::get);
-                    if (line.startsWith("JS \"")) {
-                        Function<String, String> preFunction = script -> {
-                            if (script.endsWith("\\") || script.endsWith("\"")) {
-                                script = script.substring(0, script.length() - 1);
-                            }
-                            return script.replace(" out(", "result.push(");
-                        };
-                        StringBuilder jsScriptBuilder = new StringBuilder();
-                        jsScriptBuilder.append("function execute(){").append('\n');
-                        jsScriptBuilder.append('\t').append("var result = [];").append('\n');
-                        jsScriptBuilder.append('\t').append(preFunction.apply(line.substring("JS \"".length()))).append('\n');
-                        if (!line.endsWith("\"")) {
-                            while (Objects.nonNull(line = br.readLine())) {
-                                jsScriptBuilder.append(preFunction.apply(line)).append('\n');
-                                if (line.endsWith("\"")) {
-                                    break;
-                                }
-                            }
-                        }
-                        jsScriptBuilder.append('\t').append("return result;").append('\n');
-                        jsScriptBuilder.append("};").append('\n');
-                        jsScriptBuilder.append("execute();");
-
-                        List<Map<String, Object>> fileList = new ArrayList<>(srcFiles.length);
-                        for (File srcFile : srcFiles) {
-                            fileList.add(Map.of("name", srcFile.getName(), "isDir", srcFile.isDirectory()));
-                        }
-                        List<Object> result = JavaScriptUtils.execute(jsScriptBuilder.toString(),
-                                Map.of("files", fileList), List.class);
-                        content.append(StringUtils.join(result, '\n')).append('\n');
-                        continue;
-                    }
-                    content.append(line).append('\n');
-                }
-            } finally {
-                IOUtils.closeQuietly(br);
-            }
-            FileUtils.write(scriptFile, content, StandardCharsets.UTF_8);
-        }
+        // 替换占位符
+        replacePlaceholders(scriptFiles, placeholderMap);
 
         log.debug("已初始化脚本!");
     }

@@ -14,18 +14,15 @@ import org.net.sftp.impl.JSchSftpImpl;
 import org.net.ssh.ConnectionProperties;
 import org.net.ssh.Ssh;
 import org.net.ssh.impl.JSchShellChannelSshImpl;
-import org.net.util.Assert;
-import org.net.util.CompressionUtils;
+import org.net.util.*;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * @author xiangqian
@@ -96,6 +93,69 @@ public abstract class AbstractCd implements Cd {
         // sftp
         sftp.cd(workDir);
         log.debug("<sftp> cd {}", workDir);
+    }
+
+    protected String getFilesPlaceholderValue() throws IOException {
+        return getFilesPlaceholderValue(getFilesToBeCompressed());
+    }
+
+    protected String getFilesPlaceholderValue(File... files) throws IOException {
+        List<Map<String, Object>> list = new ArrayList<>(files.length);
+        for (File srcFile : files) {
+            list.add(Map.of("name", srcFile.getName(), "isDir", srcFile.isDirectory()));
+        }
+        return JacksonUtils.toJson(list);
+    }
+
+    protected void replacePlaceholders(File[] scriptFiles, Map<String, String> placeholderMap) throws Exception {
+        // 定义以 "${" 开头，以 "}" 结尾的占位符
+        PropertyPlaceholderHelper propertyPlaceholderHelper = new PropertyPlaceholderHelper("${", "}");
+
+        // 初始化脚本文件
+        StringBuilder content = new StringBuilder();
+        for (File scriptFile : scriptFiles) {
+            content.setLength(0);
+            BufferedReader br = null;
+            try {
+                br = new BufferedReader(new FileReader(scriptFile));
+                String line = null;
+                while (Objects.nonNull(line = br.readLine())) {
+                    line = propertyPlaceholderHelper.replacePlaceholders(line, placeholderMap::get);
+                    if (line.startsWith("JS \"")) {
+                        Function<String, String> preFunction = script -> {
+                            if (script.endsWith("\\") || script.endsWith("\"")) {
+                                script = script.substring(0, script.length() - 1);
+                            }
+                            script = script.replace(" out(", "result.push(");
+                            script = propertyPlaceholderHelper.replacePlaceholders(script, placeholderMap::get);
+                            return script;
+                        };
+                        StringBuilder jsScriptBuilder = new StringBuilder();
+                        jsScriptBuilder.append("function execute(){").append('\n');
+                        jsScriptBuilder.append('\t').append("var result = [];").append('\n');
+                        jsScriptBuilder.append('\t').append(preFunction.apply(line.substring("JS \"".length()))).append('\n');
+                        if (!line.endsWith("\"")) {
+                            while (Objects.nonNull(line = br.readLine())) {
+                                jsScriptBuilder.append(preFunction.apply(line)).append('\n');
+                                if (line.endsWith("\"")) {
+                                    break;
+                                }
+                            }
+                        }
+                        jsScriptBuilder.append('\t').append("return result;").append('\n');
+                        jsScriptBuilder.append("};").append('\n');
+                        jsScriptBuilder.append("execute();");
+                        List<Object> result = JavaScriptUtils.execute(jsScriptBuilder.toString(), null, List.class);
+                        content.append(StringUtils.join(result, '\n')).append('\n');
+                        continue;
+                    }
+                    content.append(line).append('\n');
+                }
+            } finally {
+                IOUtils.closeQuietly(br);
+            }
+            FileUtils.write(scriptFile, content, StandardCharsets.UTF_8);
+        }
     }
 
     private void clear() throws Exception {

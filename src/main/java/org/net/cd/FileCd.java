@@ -2,11 +2,8 @@ package org.net.cd;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.io.FileUtils;
-import org.net.util.PropertyPlaceholderHelper;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,18 +31,13 @@ public class FileCd extends AbstractCd {
         String[] scriptPaths = {"cd/file/clear.sh"};
         scriptFiles = checkScript(scriptPaths);
 
-        // 定义以 "${" 开头，以 "}" 结尾的占位符
-        PropertyPlaceholderHelper propertyPlaceholderHelper = new PropertyPlaceholderHelper("${", "}");
+        // 占位符参数
         Map<String, String> placeholderMap = new HashMap<>();
         placeholderMap.put("ABSOLUTE_WORK_DIR", absoluteWorkDir);
+        placeholderMap.put("FILES", getFilesPlaceholderValue());
 
-        // 初始化脚本文件
-        String content = null;
-        for (File scriptFile : scriptFiles) {
-            content = FileUtils.readFileToString(scriptFile, StandardCharsets.UTF_8);
-            content = propertyPlaceholderHelper.replacePlaceholders(content, placeholderMap::get);
-            FileUtils.write(scriptFile, content, StandardCharsets.UTF_8);
-        }
+        // 替换占位符
+        replacePlaceholders(scriptFiles, placeholderMap);
 
         log.debug("已初始化脚本!");
     }

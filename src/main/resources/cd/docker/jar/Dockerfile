@@ -15,8 +15,8 @@ RUN mkdir -p /opt/application
 #COPY logback.xml xxx.jar /tmp/
 #COPY ${FILE_NAMES} /opt/application/
 # 将文件或文件夹拷贝到 /opt/application 目录下
-# 编译时将会注入files值
-JS "for (var i = 0, length = files.length; i < length; i++) { \
+JS "var files = ${DOCKER_FILES}; \
+    for (var i = 0, length = files.length; i < length; i++) { \
         var file = files[i]; \
         var isDir = file.isDir; \
         var fileName = file.name; \
