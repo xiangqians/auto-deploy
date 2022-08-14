@@ -21,11 +21,9 @@ public class FileCdTest {
                     .sessionConnectTimeout(Duration.ofSeconds(60))
                     .channelConnectTimeout(Duration.ofSeconds(60))
                     .workDir("test")
-//                    .filePath("C:\\Users\\xiangqian\\Desktop\\tmp\\properties-maven-plugin-master.xxxx")
-//                    .filePath("C:\\Users\\xiangqian\\Desktop\\tmp\\apache-skywalking-apm-bin.zip")
-//                    .filePath("C:\\Users\\xiangqian\\Desktop\\tmp\\apache-skywalking-apm-9.0.0.tar.gz")
-                    .filePath("C:\\Users\\xiangqian\\Desktop\\repository\\net")
-                    .clearWorkDir(true)
+                    .srcFilePaths("C:\\Users\\xiangqian\\Desktop\\repository\\net",
+//                            "C:\\Users\\xiangqian\\Desktop\\tmp\\apache-skywalking-apm-9.0.0.tar.gz",
+                            "C:\\Users\\xiangqian\\Desktop\\repository\\repository")
                     .build();
 
             cd.execute();

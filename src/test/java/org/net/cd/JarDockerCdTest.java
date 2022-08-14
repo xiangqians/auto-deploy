@@ -19,11 +19,21 @@ public class JarDockerCdTest {
                     .sessionConnectTimeout(Duration.ofSeconds(60))
                     .channelConnectTimeout(Duration.ofSeconds(60))
                     .workDir("test")
-                    .filePaths("E:\\workspace\\idea-my\\jar-tmp\\out\\artifacts\\jar_tmp_jar\\jar-tmp.jar",
-                            "C:\\Users\\xiangqian\\Desktop\\repository\\net")
-                    .name("test")
-                    .t("org/test:v2022.8")
+                    .srcFilePaths("E:\\workspace\\idea-my\\jar-tmp\\out\\artifacts\\jar_tmp_jar\\jar-tmp.jar",
+                            "C:\\Users\\xiangqian\\Desktop\\repository\\net",
+                            "C:\\Users\\xiangqian\\Desktop\\repository\\repository")
+
+                    // docker build
+                    .dockerBuild()
+                    .tag("org/test:v2022.08")
+                    .and()
+
+                    // docker run
+                    .dockerRun()
                     .p("8080:8080")
+                    .name("test")
+                    .and()
+
                     .build();
             cd.execute();
         } finally {

@@ -1,17 +1,16 @@
 package org.net.cd;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.io.FileUtils;
-import org.net.sftp.FileTransferMode;
-import org.net.sftp.impl.DefaultSftpProgressMonitor;
-import org.net.util.Assert;
-import org.net.util.CompressionUtils;
+import org.net.util.PropertyPlaceholderHelper;
 
 import java.io.File;
-import java.io.IOException;
-import java.time.Duration;
-import java.util.Objects;
-import java.util.UUID;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * File持续部署
@@ -22,88 +21,49 @@ import java.util.UUID;
 @Slf4j
 public class FileCd extends AbstractCd {
 
-    // file
-    private File file;
-    // 是否清空工作目录
-    private boolean clearWorkDir;
-    // .tar.gz
-    private String tarGzFileName;
-    private File tarGzFile;
+    //
+    private File[] srcFiles;
 
-    /**
-     * 压缩要上传的文件或文件夹
-     */
-    private void compress() throws IOException {
-        log.debug("准备压缩本地文件或文件夹({}) ...", file.getAbsolutePath());
-        tarGzFileName = String.format("%s.tar.gz", UUID.randomUUID().toString().replace("-", ""));
-        tarGzFile = new File(tarGzFileName);
-        CompressionUtils.tarGz(file, tarGzFile);
-        log.debug("已压缩本地文件或文件夹! (压缩文件为 {})", tarGzFile.getAbsolutePath());
-    }
+    // script
+    private File[] scriptFiles;
 
-    /**
-     * 清空当前工作目录
-     *
-     * @throws Exception
-     */
-    private void clearWorkDir() throws Exception {
-        log.debug("准备清空当前工作目录({}) ...", workDir);
-        String cmd = String.format("rm -rf ./../%s/*", workDir);
-        ssh.execute(cmd, resultConsumer(cmd));
-        log.debug("已清空当前工作目录!");
-    }
 
-    /**
-     * 上传压缩包
-     *
-     * @throws Exception
-     */
-    private void upload() throws Exception {
-        log.debug("准备上传压缩文件({}) ...", tarGzFile.getAbsolutePath());
-        sftp.put(tarGzFile.getAbsolutePath(), tarGzFileName, DefaultSftpProgressMonitor.builder().build(), FileTransferMode.OVERWRITE);
-        log.debug("已上传压缩文件!");
-    }
+    private void initScript() throws Exception {
+        log.debug("准备初始化脚本 ...");
+        // 校验脚本文件
+        String[] scriptPaths = {"cd/file/clear.sh"};
+        scriptFiles = checkScript(scriptPaths);
 
-    /**
-     * 解压
-     *
-     * @throws Exception
-     */
-    private void decompress() throws Exception {
-        log.debug("准备解压文件({}) ...", tarGzFileName);
-        String cmd = String.format("tar -zxvf ./%s", tarGzFileName);
-        ssh.execute(cmd, Duration.ofMinutes(5), resultConsumer(cmd));
-        log.debug("已解压文件!");
-    }
+        // 定义以 "${" 开头，以 "}" 结尾的占位符
+        PropertyPlaceholderHelper propertyPlaceholderHelper = new PropertyPlaceholderHelper("${", "}");
+        Map<String, String> placeholderMap = new HashMap<>();
+        placeholderMap.put("ABSOLUTE_WORK_DIR", absoluteWorkDir);
 
-    /**
-     * 删除压缩包
-     *
-     * @throws Exception
-     */
-    private void deleteArchive() throws Exception {
-        log.debug("准备删除压缩文件({}) ...", tarGzFileName);
-        String cmd = String.format("rm -rf ./%s", tarGzFileName);
-        ssh.execute(cmd, resultConsumer(cmd));
-        log.debug("已删除压缩文件!");
+        // 初始化脚本文件
+        String content = null;
+        for (File scriptFile : scriptFiles) {
+            content = FileUtils.readFileToString(scriptFile, StandardCharsets.UTF_8);
+            content = propertyPlaceholderHelper.replacePlaceholders(content, placeholderMap::get);
+            FileUtils.write(scriptFile, content, StandardCharsets.UTF_8);
+        }
+
+        log.debug("已初始化脚本!");
     }
 
     @Override
-    public void execute() throws Exception {
-        try {
-            compress();
-            cdWorkDir();
-            if (clearWorkDir) {
-                clearWorkDir();
-            }
-            upload();
-            decompress();
-            deleteArchive();
-        } finally {
-            if (Objects.nonNull(tarGzFile)) {
-                FileUtils.forceDelete(tarGzFile);
-            }
-        }
+    protected File[] getFilesToBeCompressed() {
+        return ListUtils.union(Arrays.stream(srcFiles).collect(Collectors.toList()),
+                Arrays.stream(scriptFiles).collect(Collectors.toList())).toArray(File[]::new);
+    }
+
+    @Override
+    protected File[] getScriptFiles() {
+        return scriptFiles;
+    }
+
+    @Override
+    protected void compressBeforePost() throws Exception {
+        initScript();
     }
 
     public static Builder builder() {
@@ -111,19 +71,13 @@ public class FileCd extends AbstractCd {
     }
 
     public static class Builder extends AbstractCd.Builder<Builder, FileCd> {
-        private String filePath;
-        private boolean clearWorkDir;
+        private String[] srcFilePaths;
 
         private Builder() {
         }
 
-        public Builder filePath(String filePath) {
-            this.filePath = filePath;
-            return this;
-        }
-
-        public Builder clearWorkDir(boolean clearWorkDir) {
-            this.clearWorkDir = clearWorkDir;
+        public Builder srcFilePaths(String... srcFilePaths) {
+            this.srcFilePaths = srcFilePaths;
             return this;
         }
 
@@ -134,33 +88,13 @@ public class FileCd extends AbstractCd {
 
         @Override
         public FileCd build() throws Exception {
-            Assert.notNull(workDir, "workDir不能为空");
-            // clearWorkDir
-            if (clearWorkDir) {
-                while (true) {
-                    System.out.format("此配置将会清空Linux服务器工作目录（%s）下的所有文件 [y/N]: ", workDir);
-                    int input = System.in.read();
-                    System.in.skip(System.in.available());
-                    if ('y' == input) {
-                        break;
-                    }
 
-                    if ('N' == input) {
-                        clearWorkDir = false;
-                        break;
-                    }
-                }
-            }
-            log.debug("clearWorkDir: {}", clearWorkDir);
+            // 校验资源文件路径
+            File[] srcFiles = checkSrcFilePaths(srcFilePaths);
 
-            log.debug("filePath: {}", filePath);
-            Assert.notNull(filePath, "filePath不能为空");
-            File file = new File(filePath);
-            Assert.isTrue(file.exists(), String.format("%s 文件或文件夹不存在", filePath));
-
+            //
             FileCd fileCd = super.build();
-            fileCd.file = file;
-            fileCd.clearWorkDir = clearWorkDir;
+            fileCd.srcFiles = srcFiles;
             return fileCd;
         }
     }

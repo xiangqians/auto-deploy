@@ -22,10 +22,35 @@ import java.util.UUID;
 @Slf4j
 public class CompressionUtils {
 
+    public static void tarGz(File[] srcFiles, File destFile) throws IOException {
+        TarArchiveOutputStream tarOut = null;
+        InputStream tarIn = null;
+        GzipCompressorOutputStream gzOut = null;
+        try {
+            // tar
+            ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
+            tarOut = new TarArchiveOutputStream(byteArrayOut);
+            tarOut.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+            tar(srcFiles, null, tarOut);
+            tarIn = new ByteArrayInputStream(byteArrayOut.toByteArray());
+
+            // gz
+            gzOut = new GzipCompressorOutputStream(new FileOutputStream(destFile));
+            gz(tarIn, gzOut);
+        } finally {
+            IOUtils.closeQuietly(tarIn, tarOut, gzOut);
+        }
+    }
+
+    // 拷贝文件到目录：
+    // org.apache.commons.io.FileUtils#copyFileToDirectory(java.io.File srcFile, java.io.File destDir)
+    // 拷贝目录到目录：
+    // org.apache.commons.io.FileUtils#copyDirectoryToDirectory(java.io.File sourceDir, java.io.File destinationDir)
+
+    @Deprecated
     public static void tarGz(File srcFile, File destFile) throws IOException {
         File tarFile = null;
         TarArchiveOutputStream tarOut = null;
-        GzipCompressorOutputStream gzOut = null;
         try {
             String tempDirPath = FileUtils.getTempDirectoryPath();
             log.debug("tempDirPath: {}", tempDirPath);
@@ -43,10 +68,9 @@ public class CompressionUtils {
             tar(srcFile, null, tarOut);
 
             // gz
-            gzOut = new GzipCompressorOutputStream(new FileOutputStream(destFile));
-            gz(tarFile, gzOut);
+            gz(tarFile, destFile);
         } finally {
-            IOUtils.closeQuietly(tarOut, gzOut);
+            IOUtils.closeQuietly(tarOut);
             if (Objects.nonNull(tarFile)) {
                 FileUtils.forceDelete(tarFile);
             }
@@ -54,6 +78,16 @@ public class CompressionUtils {
     }
 
     public static void unGz() {
+    }
+
+    public static void gz(File tarFile, File gzFile) throws IOException {
+        GzipCompressorOutputStream gzOut = null;
+        try {
+            gzOut = new GzipCompressorOutputStream(new FileOutputStream(gzFile));
+            gz(tarFile, gzOut);
+        } finally {
+            IOUtils.closeQuietly(gzOut);
+        }
     }
 
     /**
@@ -64,14 +98,30 @@ public class CompressionUtils {
      * @throws IOException
      */
     public static void gz(File tarFile, GzipCompressorOutputStream gzOut) throws IOException {
-        InputStream in = null;
+        InputStream tarIn = null;
         try {
-            in = new FileInputStream(tarFile);
-            IOUtils.copy(in, gzOut);
+            tarIn = new FileInputStream(tarFile);
+            gz(tarIn, gzOut);
         } finally {
-            IOUtils.closeQuietly(in);
+            IOUtils.closeQuietly(tarIn);
         }
+    }
 
+    /**
+     * gz
+     *
+     * @param tarIn
+     * @param gzOut
+     * @throws IOException
+     */
+    public static void gz(InputStream tarIn, GzipCompressorOutputStream gzOut) throws IOException {
+        IOUtils.copy(tarIn, gzOut);
+    }
+
+    public static void tar(File[] srcFiles, String base, TarArchiveOutputStream tarOut) throws IOException {
+        for (File srcFile : srcFiles) {
+            tar(srcFile, base, tarOut);
+        }
     }
 
     /**

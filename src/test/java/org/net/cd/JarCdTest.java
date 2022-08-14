@@ -24,7 +24,8 @@ public class JarCdTest {
                     // $ which java
                     // /usr/bin/java
                     .javaHome("/usr")
-                    .jarFilePath("E:\\workspace\\idea-my\\jar-tmp\\out\\artifacts\\jar_tmp_jar\\jar-tmp.jar")
+                    .srcFilePaths("E:\\workspace\\idea-my\\jar-tmp\\out\\artifacts\\jar_tmp_jar\\jar-tmp.jar",
+                            "C:\\Users\\xiangqian\\Desktop\\repository\\net")
                     .build();
             cd.execute();
         } finally {
