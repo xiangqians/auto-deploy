@@ -30,6 +30,9 @@ JS "var files = ${DOCKER_FILES}; \
 # 暴露端口
 #EXPOSE 8080
 
+# WORKDIR：设置工作目录，即cd命令
+WORKDIR /opt/application
+
 # 容器入口
 # 设置JVM栈内存、最小堆内存、最大堆内存
 ENTRYPOINT ["java","-Xss4096K","-Xms512M","-Xmx512M","-jar","/opt/application/${JAR_NAME}"]

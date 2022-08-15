@@ -1,15 +1,14 @@
 package org.net.cd;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.net.util.Assert;
 
 import java.io.File;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -21,6 +20,9 @@ import java.util.stream.Collectors;
  * <p>
  * $ docker inspect [CONTAINER ID]
  * $ cd [${MergedDir}]
+ * <p>
+ * Docker安装ping
+ * $ apt update && apt install -y iputils-ping
  *
  * @author xiangqian
  * @date 23:49 2022/07/27
@@ -69,7 +71,24 @@ public class JarDockerCd extends AbstractCd {
      */
     private void buildImage() throws Exception {
         log.debug("准备构建镜像 ...");
-        String cmd = String.format("sudo docker build -t %s .", dockerBuild.tag());
+
+        // docker build -f Dockerfile -t org/test:2022.8 .
+
+        List<String> cmds = new ArrayList<>();
+
+        // sudo
+        cmds.add("sudo");
+
+        // docker build
+        // 命令用于使用 Dockerfile 创建镜像。
+        cmds.add("docker build");
+
+        // docker build --tag, -t
+        // 镜像的名字及标签，通常 name:tag 或者 name 格式；可以在一次构建中为一个镜像设置多个标签。
+        // 例如：org/test:2022.8
+        cmds.add(String.format("-t %s .", dockerBuild.tag()));
+
+        String cmd = StringUtils.join(cmds, " ");
         ssh.execute(cmd, Duration.ofMinutes(30), resultConsumer(cmd));
         log.debug("构建镜像成功!");
     }
@@ -81,10 +100,68 @@ public class JarDockerCd extends AbstractCd {
      */
     private void runImage() throws Exception {
         log.debug("准备启动镜像 ...");
+
+        List<String> cmds = new ArrayList<>();
+
+        // sudo
+        cmds.add("sudo");
+
+        // https://docs.docker.com/engine/reference/commandline/run/
+
+        // docker run
+        // 创建一个新的容器并运行一个命令
+        cmds.add("docker run");
+
+        // -i: 以交互模式运行容器，通常与 -t 同时使用；
         // -d: 后台运行容器，并返回容器ID；
-        // --name， 指定容器名字，后续可以通过名字进行容器管理
-        // -p: 指定端口映射，格式为：主机(宿主)端口:容器端口
-        String cmd = String.format("sudo docker run -d --name %s -p %s -t %s", dockerRun.name(), dockerRun.p(), dockerBuild.tag());
+        cmds.add("-id");
+
+        // --name [name]
+        // 为容器指定一个名称，后续可以通过名字进行容器管理
+        cmds.add(String.format("--name %s", dockerRun.name()));
+
+        // -p [host port]:[container port]
+        // 指定端口映射，格式为：主机(宿主)端口:容器端口
+        List<String> ps = dockerRun.ps();
+        if (CollectionUtils.isNotEmpty(ps)) {
+            for (String p : ps) {
+                cmds.add(String.format("-p %s", p));
+            }
+        }
+
+        // -h [hostname]
+        // 指定容器的hostname；
+        List<String> hs = dockerRun.hs();
+        if (CollectionUtils.isNotEmpty(hs)) {
+            for (String h : hs) {
+                cmds.add(String.format("-h %s", h));
+            }
+        }
+
+        // --link=[]
+        // 添加链接到另一个容器；
+        // 例如：--link redis
+        List<String> links = dockerRun.links();
+        if (CollectionUtils.isNotEmpty(links)) {
+            for (String link : links) {
+                cmds.add(String.format("--link %s", link));
+            }
+        }
+
+        // --add-host [hostname]:[ip]
+        // --add-host list           Add a custom host-to-IP mapping (host:ip)
+        // --add-host db:10.194.188.183
+        List<String> add_hosts = dockerRun.add_hosts();
+        if (CollectionUtils.isNotEmpty(add_hosts)) {
+            for (String add_host : add_hosts) {
+                cmds.add(String.format("--add-host %s", add_host));
+            }
+        }
+
+        // -t: 为容器重新分配一个伪输入终端，通常与 -i 同时使用；
+        cmds.add(String.format("-t %s", dockerBuild.tag()));
+
+        String cmd = StringUtils.join(cmds, " ");
         ssh.execute(cmd, Duration.ofMinutes(30), resultConsumer(cmd));
         log.debug("已启动镜像!");
     }
@@ -164,12 +241,11 @@ public class JarDockerCd extends AbstractCd {
     }
 
     public static class DockerRun extends Docker {
-
-        // docker run --name="test": 为容器指定一个名称
         private String name;
-
-        // -p: 指定端口映射，格式为：主机(宿主)端口:容器端口
-        private String p;
+        private List<String> ps;
+        private List<String> hs;
+        private List<String> links;
+        private List<String> add_hosts;
 
         private DockerRun(Builder builder) {
             super(builder);
@@ -184,23 +260,60 @@ public class JarDockerCd extends AbstractCd {
             return this;
         }
 
-        private String p() {
-            return p;
+        private List<String> ps() {
+            return ps;
         }
 
         public DockerRun p(String p) {
-            this.p = p;
+            if (Objects.isNull(ps)) {
+                ps = new ArrayList<>();
+            }
+            this.ps.add(p);
+            return this;
+        }
+
+        private List<String> hs() {
+            return hs;
+        }
+
+        public DockerRun h(String h) {
+            if (Objects.isNull(hs)) {
+                hs = new ArrayList<>();
+            }
+            this.hs.add(h);
+            return this;
+        }
+
+        private List<String> links() {
+            return links;
+        }
+
+        public DockerRun link(String link) {
+            if (Objects.isNull(links)) {
+                links = new ArrayList<>();
+            }
+            this.links.add(link);
+            return this;
+        }
+
+        private List<String> add_hosts() {
+            return add_hosts;
+        }
+
+        public DockerRun add_host(String add_host) {
+            if (Objects.isNull(add_hosts)) {
+                add_hosts = new ArrayList<>();
+            }
+            this.add_hosts.add(add_host);
             return this;
         }
 
         private void check() {
             Assert.notNull(name = StringUtils.trimToNull(name), "name不能为空!");
-            Assert.notNull(p = StringUtils.trimToNull(p), "p不能为空!");
         }
     }
 
     public static class DockerBuild extends Docker {
-        // docker build --tag, -t: 镜像的名字及标签，通常 name:tag 或者 name 格式；可以在一次构建中为一个镜像设置多个标签。
         private String tag;
 
         private DockerBuild(Builder builder) {

@@ -25,13 +25,14 @@ public class JarDockerCdTest {
 
                     // docker build
                     .dockerBuild()
-                    .tag("org/test:v2022.08")
+                    .tag("org/test:2022.8")
                     .and()
 
                     // docker run
                     .dockerRun()
-                    .p("8080:8080")
                     .name("test")
+                    .p("8080:8080")
+                    .add_host("hostname:192.168.2.43")
                     .and()
 
                     .build();

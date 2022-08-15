@@ -22,7 +22,7 @@ public class FileCdTest {
                     .channelConnectTimeout(Duration.ofSeconds(60))
                     .workDir("test")
                     .srcFilePaths("C:\\Users\\xiangqian\\Desktop\\repository\\net",
-//                            "C:\\Users\\xiangqian\\Desktop\\tmp\\apache-skywalking-apm-9.0.0.tar.gz",
+                            "C:\\Users\\xiangqian\\Desktop\\tmp\\apache-skywalking-apm-9.0.0.tar.gz",
                             "C:\\Users\\xiangqian\\Desktop\\repository\\repository")
                     .build();
 
