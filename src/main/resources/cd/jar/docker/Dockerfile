@@ -1,5 +1,6 @@
 # FROM命令定义构建镜像的基础镜像
-FROM openjdk:13
+#FROM openjdk:13
+FROM mohitdhingra01/jdk13minimal
 
 # 以root执行
 USER root

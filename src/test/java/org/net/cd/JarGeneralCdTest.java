@@ -1,7 +1,8 @@
 package org.net.cd;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.net.cd.jar.JarDockerCd;
+import org.net.cd.jar.JarGeneralCd;
 import org.net.cd.source.MavenSource;
 import org.net.ssh.SshTest;
 
@@ -9,14 +10,15 @@ import java.time.Duration;
 
 /**
  * @author xiangqian
- * @date 23:12 2022/08/11
+ * @date 01:42 2022/07/26
  */
-public class JarDockerCdTest {
+@Slf4j
+public class JarGeneralCdTest {
 
     public static void main(String[] args) throws Exception {
         Cd cd = null;
         try {
-            cd = JarDockerCd.builder()
+            cd = JarGeneralCd.builder()
                     .connectionProperties(SshTest.getConnectionProperties())
                     .sessionConnectTimeout(Duration.ofSeconds(60))
                     .channelConnectTimeout(Duration.ofSeconds(60))
@@ -26,6 +28,10 @@ public class JarDockerCdTest {
 
                     // 是否以sudo执行命令
                     .sudo(true)
+
+                    // $ which java
+                    // /usr/bin/java
+                    .javaHome("/usr")
 
                     // 配置资源
                     // FileSource
@@ -44,20 +50,7 @@ public class JarDockerCdTest {
                             .mvn()
                             .P("test") // dev,test,prod
                             .and()
-
                             .build())
-
-                    // docker build
-                    .dockerBuild()
-                    .tag("org/test:2022.8")
-                    .and()
-
-                    // docker run
-                    .dockerRun()
-                    .name("test")
-                    .p("8081:8081")
-                    .add_host("hostname:192.168.2.43")
-                    .and()
 
                     .build();
             cd.execute();

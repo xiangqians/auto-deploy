@@ -53,17 +53,29 @@ public class SshTest implements Closeable {
     // 133,961 ms
 
     private void test() {
-        execute("ls -l");
+//        execute("ls -l");
 //        execute("cd test1");
-        execute("pwd");
+//        execute("pwd");
 //        execute("touch tmp.txt");
 //        execute("ls -l");
 //        execute("cd test;pwd;ls -l");
+
+        execute("cd test");
+        execute("pwd");
+        execute("sudo docker build -t test .", Duration.ofMinutes(10));
     }
 
     private void execute(String cmd) {
         try {
             ssh.execute(cmd, resultConsumer(cmd));
+        } catch (Exception e) {
+            log.error("", e);
+        }
+    }
+
+    private void execute(String cmd, Duration timeout) {
+        try {
+            ssh.execute(cmd, timeout, resultConsumer(cmd));
         } catch (Exception e) {
             log.error("", e);
         }
