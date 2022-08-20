@@ -44,7 +44,7 @@ public class JarDockerCd extends AbstractCd {
     private DockerBuild dockerBuild;
     private DockerRun dockerRun;
 
-    private JarDockerCd() {
+    protected JarDockerCd() {
     }
 
     private JarDockerCd set(DockerBuild dockerBuild, DockerRun dockerRun) {

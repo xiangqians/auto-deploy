@@ -22,16 +22,16 @@ public class FileSource implements Source {
     }
 
     @Override
-    public File[] get() {
+    public File[] get() throws Exception {
         return files;
-    }
-
-    public static Builder builder() {
-        return new Builder();
     }
 
     @Override
     public void close() throws IOException {
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     public static class Builder {

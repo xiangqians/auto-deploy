@@ -418,6 +418,21 @@ public abstract class AbstractCd implements Cd {
         }
     }
 
+    public static void closeQuietly(AutoCloseable... autoCloseables) {
+        if (ArrayUtils.isEmpty(autoCloseables)) {
+            return;
+        }
+
+        for (AutoCloseable autoCloseable : autoCloseables) {
+            if (Objects.nonNull(autoCloseable)) {
+                try {
+                    autoCloseable.close();
+                } catch (Exception e) {
+                }
+            }
+        }
+    }
+
     protected static abstract class Builder<B extends Builder, A extends AbstractCd> {
 
         private ConnectionProperties connectionProperties;
