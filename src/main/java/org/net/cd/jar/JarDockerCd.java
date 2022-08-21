@@ -204,19 +204,19 @@ public class JarDockerCd extends AbstractCd {
     }
 
     public static class Builder extends AbstractCd.Builder<Builder, JarDockerCd> {
-        private DockerBuild dockerBuild;
-        private DockerRun dockerRun;
+        private DockerBuild<Builder> dockerBuild;
+        private DockerRun<Builder> dockerRun;
 
-        public Builder() {
+        private Builder() {
             this.dockerBuild = new DockerBuild(this);
             this.dockerRun = new DockerRun(this);
         }
 
-        public DockerBuild dockerBuild() {
+        public DockerBuild<Builder> dockerBuild() {
             return dockerBuild;
         }
 
-        public DockerRun dockerRun() {
+        public DockerRun<Builder> dockerRun() {
             return dockerRun;
         }
 
@@ -231,14 +231,14 @@ public class JarDockerCd extends AbstractCd {
         }
     }
 
-    public static class DockerRun extends Docker {
+    public static class DockerRun<B> extends Docker<B> {
         private String name;
         private List<String> ps;
         private List<String> hs;
         private List<String> links;
         private List<String> add_hosts;
 
-        private DockerRun(Builder builder) {
+        protected DockerRun(B builder) {
             super(builder);
         }
 
@@ -246,12 +246,12 @@ public class JarDockerCd extends AbstractCd {
             return name;
         }
 
-        public DockerRun name(String name) {
+        public DockerRun<B> name(String name) {
             this.name = name;
             return this;
         }
 
-        public DockerRun p(String p) {
+        public DockerRun<B> p(String p) {
             if (Objects.isNull(ps)) {
                 ps = new ArrayList<>();
             }
@@ -259,7 +259,7 @@ public class JarDockerCd extends AbstractCd {
             return this;
         }
 
-        public DockerRun h(String h) {
+        public DockerRun<B> h(String h) {
             if (Objects.isNull(hs)) {
                 hs = new ArrayList<>();
             }
@@ -267,7 +267,7 @@ public class JarDockerCd extends AbstractCd {
             return this;
         }
 
-        public DockerRun link(String link) {
+        public DockerRun<B> link(String link) {
             if (Objects.isNull(links)) {
                 links = new ArrayList<>();
             }
@@ -275,7 +275,7 @@ public class JarDockerCd extends AbstractCd {
             return this;
         }
 
-        public DockerRun add_host(String add_host) {
+        public DockerRun<B> add_host(String add_host) {
             if (Objects.isNull(add_hosts)) {
                 add_hosts = new ArrayList<>();
             }
@@ -288,14 +288,14 @@ public class JarDockerCd extends AbstractCd {
         }
     }
 
-    public static class DockerBuild extends Docker {
+    public static class DockerBuild<B> extends Docker<B> {
         private String tag;
 
-        private DockerBuild(Builder builder) {
+        protected DockerBuild(B builder) {
             super(builder);
         }
 
-        public DockerBuild tag(String tag) {
+        public DockerBuild<B> tag(String tag) {
             this.tag = tag;
             return this;
         }
@@ -305,14 +305,14 @@ public class JarDockerCd extends AbstractCd {
         }
     }
 
-    public static abstract class Docker {
-        private Builder builder;
+    public static abstract class Docker<B> {
+        private B builder;
 
-        protected Docker(Builder builder) {
+        protected Docker(B builder) {
             this.builder = builder;
         }
 
-        public Builder and() {
+        public B and() {
             return builder;
         }
     }

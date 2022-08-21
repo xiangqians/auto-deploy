@@ -433,7 +433,7 @@ public abstract class AbstractCd implements Cd {
         }
     }
 
-    protected static abstract class Builder<B extends Builder, A extends AbstractCd> {
+    public static abstract class Builder<B extends Builder, A extends AbstractCd> {
 
         private ConnectionProperties connectionProperties;
         private Duration sessionConnectTimeout;

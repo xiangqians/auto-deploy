@@ -148,7 +148,7 @@ public class MavenSource implements Source {
         private String mavenHome;
         private String projectDir;
         private String[] filePaths;
-        private Mvn mvn;
+        private Mvn<Builder> mvn;
 
         private Builder() {
             mvn = new Mvn(this);
@@ -169,7 +169,7 @@ public class MavenSource implements Source {
             return this;
         }
 
-        public Mvn mvn() {
+        public Mvn<Builder> mvn() {
             return mvn;
         }
 
@@ -194,11 +194,11 @@ public class MavenSource implements Source {
         }
     }
 
-    public static class Mvn {
-        private Builder builder;
+    public static class Mvn<B> {
+        private B builder;
         private String P;
 
-        private Mvn(Builder builder) {
+        public Mvn(B builder) {
             this.builder = builder;
         }
 
@@ -206,7 +206,7 @@ public class MavenSource implements Source {
             return P;
         }
 
-        public Mvn P(String P) {
+        public Mvn<B> P(String P) {
             this.P = P;
             return this;
         }
@@ -214,7 +214,7 @@ public class MavenSource implements Source {
         private void check() {
         }
 
-        public Builder and() {
+        public B and() {
             return builder;
         }
 
