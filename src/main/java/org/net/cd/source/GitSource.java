@@ -52,8 +52,11 @@ public class GitSource implements Source {
         }
 
         // 获取临时目录，用于存放仓库文件
-        String tempRepoDir = FileUtils.getTempDirectoryPath() + File.separator + "temp_" + UUID.randomUUID().toString().replace("-", "");
-        log.debug("tempDirPath: {}", tempRepoDir);
+        String tempDirPath = FileUtils.getTempDirectoryPath();
+        if (!tempDirPath.endsWith(File.separator)) {
+            tempDirPath += File.separator;
+        }
+        String tempRepoDir = tempDirPath + "temp_" + UUID.randomUUID().toString().replace("-", "");
         tempRepoDirFile = new File(tempRepoDir);
 
         // clone
@@ -92,7 +95,9 @@ public class GitSource implements Source {
         if (iterator.hasNext()) {
             RevCommit revCommit = iterator.next();
             if (Objects.isNull(commitId) || commitId.equals(revCommit.getName())) {
-                commitId = revCommit.getName();
+                if (Objects.isNull(commitId)) {
+                    commitId = revCommit.getName();
+                }
                 return false;
             }
 

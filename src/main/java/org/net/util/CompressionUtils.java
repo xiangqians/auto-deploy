@@ -53,8 +53,11 @@ public class CompressionUtils {
         TarArchiveOutputStream tarOut = null;
         try {
             String tempDirPath = FileUtils.getTempDirectoryPath();
+            if (!tempDirPath.endsWith(File.separator)) {
+                tempDirPath += File.separator;
+            }
             log.debug("tempDirPath: {}", tempDirPath);
-            tarFile = new File(tempDirPath + File.separator + "temp_" + UUID.randomUUID().toString().replace("-", "") + ".tar");
+            tarFile = new File(tempDirPath + "temp_" + UUID.randomUUID().toString().replace("-", "") + ".tar");
             log.debug("tarFilePath: {}", tarFile.getAbsolutePath());
 
             // IllegalArgumentException: file name 'xxx ...' is too long ( > 100 bytes)

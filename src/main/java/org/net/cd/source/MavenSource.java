@@ -130,14 +130,17 @@ public class MavenSource implements Source {
         log.debug("准备拷贝maven项目到临时目录下 ...");
 
         // 获取临时目录，用于存放maven项目
-        String tempDirPath = FileUtils.getTempDirectoryPath() + File.separator + "temp_" + UUID.randomUUID().toString().replace("-", "");
-        log.debug("tempDirPath: {}", tempDirPath);
+        String tempDirPath = FileUtils.getTempDirectoryPath();
+        if (!tempDirPath.endsWith(File.separator)) {
+            tempDirPath += File.separator;
+        }
+        tempDirPath += "temp_" + UUID.randomUUID().toString().replace("-", "");
         tempProjectDirFile = new File(tempDirPath);
 
         // 拷贝
         FileUtils.copyDirectoryToDirectory(projectDirFile, tempProjectDirFile);
 
-        log.debug("已拷贝maven项目到临时目录下! (临时目录 {})", tempDirPath);
+        log.debug("已拷贝maven项目到临时目录下! (临时目录 {})", tempProjectDirFile.getAbsolutePath());
     }
 
     public static Builder builder() {

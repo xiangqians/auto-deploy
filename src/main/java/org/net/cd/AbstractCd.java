@@ -142,11 +142,13 @@ public abstract class AbstractCd implements Cd {
 
         // 获取临时目录，用于压缩后的文件（tar.gz）
         String tempDirPath = FileUtils.getTempDirectoryPath();
-        log.debug("tempDirPath: {}", tempDirPath);
+        if (!tempDirPath.endsWith(File.separator)) {
+            tempDirPath += File.separator;
+        }
 
         // 压缩
         String tarGzFileName = String.format("temp_%s.tar.gz", UUID.randomUUID().toString().replace("-", ""));
-        tarGzFile = new File(tempDirPath + File.separator + tarGzFileName);
+        tarGzFile = new File(tempDirPath + tarGzFileName);
         CompressionUtils.tarGz(getFilesToBeCompressed(), tarGzFile);
         log.debug("已压缩本地文件或文件夹! (压缩文件为 {})", tarGzFile.getAbsolutePath());
     }
