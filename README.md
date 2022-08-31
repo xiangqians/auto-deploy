@@ -9,6 +9,5 @@
 │     │   └─ FileCd
 │     └─ jar
 │         ├─ JarGeneralCd
-│         ├─ JarDockerCd
-│         └─ JarGitCd
+│         └─ JarDockerCd
 ```
