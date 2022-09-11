@@ -1,0 +1,45 @@
+<assembly>
+    <id>jar-assembly</id>
+
+    <!--
+     | 指定打包格式。
+     | 支持：zip、tar、tar.gz (or tgz)、tar.bz2 (or tbz2)、jar、dir、war
+     |-->
+    <formats>
+        <format>jar</format>
+    </formats>
+
+    <includeBaseDirectory>false</includeBaseDirectory>
+
+    <fileSets>
+        <fileSet>
+            <!--
+             | ${basedir}:                  project
+             | ${build.directory}:          project/target
+             | ${build.outputDirectory}:    project/target/classes
+             | ${project.build.outputDirectory}
+             |-->
+            <directory>${project.build.outputDirectory}</directory>
+            <includes>
+                <include>log4j.properties</include>
+            </includes>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
+
+        <fileSet>
+            <directory>${project.build.outputDirectory}/script/static</directory>
+            <outputDirectory>script/static</outputDirectory>
+        </fileSet>
+
+        <fileSet>
+            <directory>${project.build.outputDirectory}/script/jar</directory>
+            <outputDirectory>script/jar</outputDirectory>
+        </fileSet>
+
+        <fileSet>
+            <directory>${project.build.outputDirectory}/script/jar-docker</directory>
+            <outputDirectory>script/jar-docker</outputDirectory>
+        </fileSet>
+    </fileSets>
+
+</assembly>

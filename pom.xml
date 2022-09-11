@@ -198,11 +198,25 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <filtering>true</filtering>
+                <includes>
+                    <include>**/*</include>
+                </includes>
             </resource>
         </resources>
 
         <plugins>
+            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <target>${maven.compiler.target}</target>
+                    <source>${maven.compiler.source}</source>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+
             <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
             <!-- maven打包项目，包含第三方库依赖 -->
             <plugin>
@@ -211,6 +225,7 @@
                 <version>${maven-assembly-plugin.version}</version>
                 <configuration>
                     <finalName>${pkg.name}</finalName>
+                    <encoding>utf-8</encoding>
 
                     <!--
                      | 注意：如果没有配置appendAssemblyId为false，那么打包出来的jar包会带有jar-with-dependencies，引入该库依赖的时候需要使用classifier，
@@ -225,6 +240,11 @@
                             <mainClass>${main.class}</mainClass>
                         </manifest>
                     </archive>
+                    <!--
+                    <descriptors>
+                        <descriptor>${project.basedir}/assembly/assembly.xml</descriptor>
+                    </descriptors>
+                    -->
                 </configuration>
                 <executions>
                     <execution>
@@ -232,6 +252,7 @@
                         <!-- none,package -->
                         <phase>package</phase>
                         <goals>
+                            <!-- single -->
                             <goal>single</goal>
                         </goals>
                     </execution>

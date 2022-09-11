@@ -80,8 +80,8 @@ public class JarDockerDeployment extends JarDeployment {
     @Override
     protected void initScriptFiles() throws Exception {
         // script files
-        scriptFiles = new File[]{getScriptFile("jar-docker/Dockerfile"),
-                getScriptFile("jar-docker/clean.sh")};
+        scriptFiles = new File[]{getScriptFile("jar/docker/Dockerfile"),
+                getScriptFile("jar/docker/clean.sh")};
 
         // placeholderMap
         // --name

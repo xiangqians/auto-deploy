@@ -12,9 +12,13 @@ import org.auto.deploy.support.deployment.StaticDeployment;
 import org.auto.deploy.support.source.GitSource;
 import org.auto.deploy.support.source.LocalSource;
 import org.auto.deploy.support.source.Source;
+import org.auto.deploy.util.Assert;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 自动化部署应用
@@ -112,10 +116,25 @@ public class AutoDeployApplication implements Closeable {
 
     public static void main(String[] args) throws Exception {
 
-        String configLocation = "E:\\workspace\\idea-my\\auto-deploy\\src\\test\\resources\\config.yml";
-        configLocation = "E:\\workspace\\idea-my\\auto-deploy\\config\\config.yml";
-        configLocation = "C:\\Users\\xiangqian\\Desktop\\tmp\\config\\config.yml";
-        System.setProperty("auto.deploy.config.location", configLocation);
+////        AutoDeployApplication.class.getClassLoader().getResource();
+//        URL url = Thread.currentThread().getContextClassLoader().getResource("script/jar/docker/Dockerfile");
+//        log.debug("url: {}", url);
+//        log.debug("url.getFile: {}", url.getFile());
+//        log.debug("url.toString: {}", IOUtils.toString(url, StandardCharsets.UTF_8));
+//
+//        log.debug("name: {}", new File(url.getFile()).getName());
+//        log.debug("getProtocol: {}",  url.getProtocol()); // jar, file
+//        // file:/E:/workspace/idea-my/auto-deploy/target/classes/script/jar/docker/Dockerfile
+//        // jar:file:/E:/workspace/idea-my/auto-deploy/target/auto-deploy-2022.7.jar!/script/jar/docker/Dockerfile
+//
+//        if (1 == 1) {
+//            return;
+//        }
+
+//        String configLocation = "E:\\workspace\\idea-my\\auto-deploy\\src\\test\\resources\\config.yml";
+//        configLocation = "E:\\workspace\\idea-my\\auto-deploy\\config\\config.yml";
+//        configLocation = "C:\\Users\\xiangqian\\Desktop\\tmp\\config\\config.yml";
+//        System.setProperty("auto.deploy.config.location", configLocation);
 
         AutoDeployApplication application = null;
         try {
