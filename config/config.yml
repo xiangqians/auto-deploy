@@ -1,16 +1,3 @@
-# 自动化部署
-
-部署java、vue应用
-
-# 自动化部署配置
-
-```
-服务器配置(server) --> 资源配置(source) --> 构建器配置(builder) --> 部署配置(deployment)
-```
-
-# config.yml
-
-```yaml
 # 服务器配置
 server:
   # host
@@ -133,4 +120,3 @@ deployment:
       - --add-host db:10.194.188.183
       # -t: 为容器重新分配一个伪输入终端, 通常与 -i 同时使用
       - -t org/auto-deploy:2022.7
-```

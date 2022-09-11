@@ -4,23 +4,33 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.net</groupId>
-    <artifactId>net</artifactId>
+    <groupId>org.auto.deploy</groupId>
+    <artifactId>auto-deploy</artifactId>
     <version>2022.7</version>
 
-    <name>net</name>
-    <!-- FIXME change it to the project's website -->
-    <url>http://www.example.com</url>
+    <name>${project.artifactId}</name>
+    <description>Automatic Deployment</description>
+    <url>https://github.com/xiangqians/auto-deploy</url>
 
     <properties>
         <maven.compiler.source>12</maven.compiler.source>
         <maven.compiler.target>12</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+        <!-- skipTests -->
         <skipTests>true</skipTests>
+
+        <!-- pkg name -->
+        <pkg.name>${project.name}-${project.version}</pkg.name>
+
+        <!-- mainClass -->
+        <main.class>org.auto.deploy.AutoDeployApplication</main.class>
 
         <!-- lombok -->
         <lombok.version>1.18.18</lombok.version>
+
+        <!-- junit -->
+        <junit.version>4.11</junit.version>
 
         <!-- log4j -->
         <slf4j.version>1.7.25</slf4j.version>
@@ -37,6 +47,7 @@
 
         <!-- jsch -->
         <jsch.version>0.1.55</jsch.version>
+        <!-- 使用Mina替代JSch? -->
 
         <!-- jgit -->
         <jgit.version>6.2.0.202206071550-r</jgit.version>
@@ -46,6 +57,12 @@
 
         <!-- jackson -->
         <jackson.version>2.13.3</jackson.version>
+
+        <!-- snakeyaml -->
+        <snakeyaml.version>1.31</snakeyaml.version>
+
+        <!-- maven-assembly-plugin -->
+        <maven-assembly-plugin.version>3.4.2</maven-assembly-plugin.version>
 
     </properties>
 
@@ -75,6 +92,13 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>${jackson.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.yaml/snakeyaml -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>${snakeyaml.version}</version>
         </dependency>
 
         <!-- nashorn-core，JavaScript引擎 -->
@@ -155,7 +179,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -168,5 +192,52 @@
         </dependency>
 
     </dependencies>
+
+    <build>
+        <finalName>${pkg.name}</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
+            <!-- maven打包项目，包含第三方库依赖 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>${maven-assembly-plugin.version}</version>
+                <configuration>
+                    <finalName>${pkg.name}</finalName>
+
+                    <!--
+                     | 注意：如果没有配置appendAssemblyId为false，那么打包出来的jar包会带有jar-with-dependencies，引入该库依赖的时候需要使用classifier，
+                     |例如：<classifier>jar-with-dependencies</classifier>
+                     -->
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>${main.class}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>assembly</id>
+                        <!-- none,package -->
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
