@@ -36,6 +36,7 @@ public class AutoDeployApplication implements Closeable {
     private Deployment deployment;
 
     public void run() throws Exception {
+
         // ========== init
 
         // config
@@ -115,21 +116,6 @@ public class AutoDeployApplication implements Closeable {
     }
 
     public static void main(String[] args) throws Exception {
-
-////        AutoDeployApplication.class.getClassLoader().getResource();
-//        URL url = Thread.currentThread().getContextClassLoader().getResource("script/jar/docker/Dockerfile");
-//        log.debug("url: {}", url);
-//        log.debug("url.getFile: {}", url.getFile());
-//        log.debug("url.toString: {}", IOUtils.toString(url, StandardCharsets.UTF_8));
-//
-//        log.debug("name: {}", new File(url.getFile()).getName());
-//        log.debug("getProtocol: {}",  url.getProtocol()); // jar, file
-//        // file:/E:/workspace/idea-my/auto-deploy/target/classes/script/jar/docker/Dockerfile
-//        // jar:file:/E:/workspace/idea-my/auto-deploy/target/auto-deploy-2022.7.jar!/script/jar/docker/Dockerfile
-//
-//        if (1 == 1) {
-//            return;
-//        }
 
 //        String configLocation = "E:\\workspace\\idea-my\\auto-deploy\\src\\test\\resources\\config.yml";
 //        configLocation = "E:\\workspace\\idea-my\\auto-deploy\\config\\config.yml";

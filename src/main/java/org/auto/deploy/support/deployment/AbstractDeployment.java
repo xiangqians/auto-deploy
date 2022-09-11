@@ -8,10 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.auto.deploy.support.Server;
 import org.auto.deploy.util.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -122,14 +119,14 @@ public abstract class AbstractDeployment implements Deployment {
     // ====================
 
     /**
-     * 替换文件占位符
+     * 替换脚本资源占位符
      *
-     * @param file
+     * @param url
      * @param placeholderMap
      * @return
      * @throws Exception
      */
-    protected File replaceFilePlaceholders(File file, Map<String, Object> placeholderMap) throws Exception {
+    protected File replaceScriptResourcePlaceholders(URL url, Map<String, Object> placeholderMap) throws Exception {
 
         // Object -> String
         Map<String, String> placeholderStrMap = new HashMap<>(placeholderMap.size());
@@ -161,7 +158,14 @@ public abstract class AbstractDeployment implements Deployment {
         StringBuilder content = new StringBuilder();
         BufferedReader br = null;
         try {
-            br = new BufferedReader(new FileReader(file));
+            if ("file".equals(url.getProtocol())) {
+                br = new BufferedReader(new FileReader(url.getFile()));
+            } else if ("jar".equals(url.getProtocol())) {
+                br = new BufferedReader(new InputStreamReader(url.openStream()));
+            } else {
+                throw new UnknownError(String.format("未知URL协议: %s", url.getProtocol()));
+            }
+
             String line = null;
             while (Objects.nonNull(line = br.readLine())) {
                 line = propertyPlaceholderHelper.replacePlaceholders(line, placeholderStrMap::get);
@@ -199,9 +203,9 @@ public abstract class AbstractDeployment implements Deployment {
             IOUtils.closeQuietly(br);
         }
 
-        log.debug("替换文件占位符: {}\n{}", file.getAbsolutePath(), content);
+        log.debug("替换文件占位符: {}\n{}", url.getFile(), content);
 
-        File newFile = Path.of(tempDir.getAbsolutePath(), file.getName()).toFile();
+        File newFile = Path.of(tempDir.getAbsolutePath(), new File(url.getFile()).getName()).toFile();
         FileUtils.write(newFile, content, StandardCharsets.UTF_8);
         return newFile;
     }
@@ -231,18 +235,16 @@ public abstract class AbstractDeployment implements Deployment {
     }
 
     /**
-     * 获取脚本文件
+     * 获取脚本资源
      *
      * @param name
      * @return
      */
-    protected File getScriptFile(String name) {
+    protected URL getScriptResource(String name) {
         name = String.format("script/%s", name);
         URL url = Thread.currentThread().getContextClassLoader().getResource(name);
         Assert.notNull(url, String.format("未找到 %s 脚本文件!", name));
-        File file = new File(url.getFile());
-        Assert.isTrue(file.exists(), String.format("%s 脚本文件不存在!", name));
-        return file;
+        return url;
     }
 
     protected void chmodX(File... files) throws Exception {
@@ -274,6 +276,11 @@ public abstract class AbstractDeployment implements Deployment {
 
         public FilesPlaceholderValue() {
             value = new ArrayList<>();
+        }
+
+        public FilesPlaceholderValue add(URL url) {
+            add(String.format("./%s", new File(url.getFile()).getName()), false);
+            return this;
         }
 
         public FilesPlaceholderValue add(File file) {

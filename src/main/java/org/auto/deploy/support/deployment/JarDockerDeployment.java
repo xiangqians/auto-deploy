@@ -7,6 +7,7 @@ import org.auto.deploy.support.Server;
 import org.auto.deploy.support.source.Source;
 
 import java.io.File;
+import java.net.URL;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -80,8 +81,8 @@ public class JarDockerDeployment extends JarDeployment {
     @Override
     protected void initScriptFiles() throws Exception {
         // script files
-        scriptFiles = new File[]{getScriptFile("jar/docker/Dockerfile"),
-                getScriptFile("jar/docker/clean.sh")};
+        URL[] scriptUrls = new URL[]{getScriptResource("jar/docker/Dockerfile"),
+                getScriptResource("jar/docker/clean.sh")};
 
         // placeholderMap
         // --name
@@ -100,7 +101,7 @@ public class JarDockerDeployment extends JarDeployment {
         FilesPlaceholderValue filesPlaceholderValue = new FilesPlaceholderValue();
         filesPlaceholderValue.add(pkgFile);
         Optional.ofNullable(addlFiles).ifPresent(files -> Arrays.stream(files).forEach(filesPlaceholderValue::add));
-        Optional.ofNullable(scriptFiles).ifPresent(files -> Arrays.stream(files).forEach(filesPlaceholderValue::add));
+        Arrays.stream(scriptUrls).forEach(filesPlaceholderValue::add);
         // DOCKER_FILES
         FilesPlaceholderValue dockerFilesPlaceholderValue = new FilesPlaceholderValue();
         dockerFilesPlaceholderValue.add(pkgFile);
@@ -112,8 +113,10 @@ public class JarDockerDeployment extends JarDeployment {
                 "JAR_NAME", pkgFile.getName());
 
         // replaceFilePlaceholders
-        for (int i = 0, length = scriptFiles.length; i < length; i++) {
-            scriptFiles[i] = replaceFilePlaceholders(scriptFiles[i], placeholderMap);
+        int length = scriptUrls.length;
+        scriptFiles = new File[length];
+        for (int i = 0; i < length; i++) {
+            scriptFiles[i] = replaceScriptResourcePlaceholders(scriptUrls[i], placeholderMap);
         }
     }
 

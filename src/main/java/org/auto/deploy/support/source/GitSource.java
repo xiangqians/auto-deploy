@@ -116,6 +116,12 @@ public class GitSource implements Source {
         return false;
     }
 
+    /**
+     * 下一版本支持 GitHook
+     *
+     * @param notice
+     * @throws Exception
+     */
     public synchronized void listen(Notice notice) throws Exception {
         if (config.getPollTimer() == 0) {
             notice.on();

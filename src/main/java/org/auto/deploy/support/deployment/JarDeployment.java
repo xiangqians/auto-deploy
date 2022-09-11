@@ -9,6 +9,7 @@ import org.auto.deploy.support.source.Source;
 import org.auto.deploy.util.Assert;
 
 import java.io.File;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
@@ -86,24 +87,26 @@ public class JarDeployment extends AbstractDeployment {
 
     protected void initScriptFiles() throws Exception {
         // script files
-        scriptFiles = new File[]{getScriptFile("jar/jps.sh"),
-                getScriptFile("jar/startup.sh"),
-                getScriptFile("jar/shutdown.sh"),
-                getScriptFile("jar/clean.sh")};
+        URL[] scriptUrls = new URL[]{getScriptResource("jar/jps.sh"),
+                getScriptResource("jar/startup.sh"),
+                getScriptResource("jar/shutdown.sh"),
+                getScriptResource("jar/clean.sh")};
 
         // placeholderMap
         FilesPlaceholderValue filesPlaceholderValue = new FilesPlaceholderValue();
         filesPlaceholderValue.add(pkgFile);
         Optional.ofNullable(addlFiles).ifPresent(files -> Arrays.stream(files).forEach(filesPlaceholderValue::add));
-        Optional.ofNullable(scriptFiles).ifPresent(files -> Arrays.stream(files).forEach(filesPlaceholderValue::add));
+        Arrays.stream(scriptUrls).forEach(filesPlaceholderValue::add);
         Map<String, Object> placeholderMap = Map.of("FILES", filesPlaceholderValue,
                 "JAVA_HOME", config.getJavaHome(),
                 "JAR_PATH", String.format("%s/%s", server.getAbsoluteWorkDir(), pkgFile.getName()),
                 "JAR_NAME", pkgFile.getName());
 
         // replaceFilePlaceholders
-        for (int i = 0, length = scriptFiles.length; i < length; i++) {
-            scriptFiles[i] = replaceFilePlaceholders(scriptFiles[i], placeholderMap);
+        int length = scriptUrls.length;
+        scriptFiles = new File[length];
+        for (int i = 0; i < length; i++) {
+            scriptFiles[i] = replaceScriptResourcePlaceholders(scriptUrls[i], placeholderMap);
         }
     }
 

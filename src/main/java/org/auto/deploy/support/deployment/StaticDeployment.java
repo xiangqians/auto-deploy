@@ -10,6 +10,7 @@ import org.auto.deploy.support.source.Source;
 import org.auto.deploy.util.Assert;
 
 import java.io.File;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
@@ -111,19 +112,21 @@ public class StaticDeployment extends AbstractDeployment {
         }
 
         // script files
-        scriptFiles = new File[]{getScriptFile("static/clean.sh")};
+        URL[] scriptUrls = new URL[]{getScriptResource("static/clean.sh")};
         // placeholderMap
         FilesPlaceholderValue filesPlaceholderValue = new FilesPlaceholderValue();
         Arrays.stream(pkgFiles).forEach(filesPlaceholderValue::add);
         Optional.ofNullable(addlFiles).ifPresent(files -> Arrays.stream(files).forEach(filesPlaceholderValue::add));
-        Optional.ofNullable(scriptFiles).ifPresent(files -> Arrays.stream(files).forEach(filesPlaceholderValue::add));
+        Arrays.stream(scriptUrls).forEach(filesPlaceholderValue::add);
         // --- location ---
         Arrays.stream(pkgFiles).forEach(file -> filesPlaceholderValue.add(String.format("%s/%s", absoluteLocation, file.getName()), file.isDirectory()));
-        Arrays.stream(addlFiles).forEach(file -> filesPlaceholderValue.add(String.format("%s/%s", absoluteLocation, file.getName()), file.isDirectory()));
+        Optional.ofNullable(addlFiles).ifPresent(files -> Arrays.stream(files).forEach(file -> filesPlaceholderValue.add(String.format("%s/%s", absoluteLocation, file.getName()), file.isDirectory())));
         Map<String, Object> placeholderMap = Map.of("FILES", filesPlaceholderValue);
         // replaceFilePlaceholders
-        for (int i = 0, length = scriptFiles.length; i < length; i++) {
-            scriptFiles[i] = replaceFilePlaceholders(scriptFiles[i], placeholderMap);
+        int length = scriptUrls.length;
+        scriptFiles = new File[length];
+        for (int i = 0; i < length; i++) {
+            scriptFiles[i] = replaceScriptResourcePlaceholders(scriptUrls[i], placeholderMap);
         }
 
         // files
