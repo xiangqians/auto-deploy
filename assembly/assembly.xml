@@ -34,6 +34,14 @@
         </fileSet>
 
         <fileSet>
+            <directory>${project.basedir}/config</directory>
+            <outputDirectory></outputDirectory>
+            <includes>
+                <include>config-example.yml</include>
+            </includes>
+        </fileSet>
+
+        <fileSet>
             <directory>${project.build.outputDirectory}</directory>
             <lineEnding>unix</lineEnding>
             <outputDirectory></outputDirectory>

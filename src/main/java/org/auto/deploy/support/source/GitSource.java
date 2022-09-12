@@ -1,5 +1,6 @@
 package org.auto.deploy.support.source;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -39,9 +40,13 @@ public class GitSource implements Source {
     private Git git;
     private String commitId;
 
+    @Setter
+    private volatile boolean listenFlag;
+
     public GitSource(GitSourceConfig config) {
         config.validate();
         this.config = config;
+        this.listenFlag = true;
     }
 
     @Override
@@ -132,9 +137,9 @@ public class GitSource implements Source {
         get();
 
         // poll
-        while (true) {
+        while (listenFlag) {
             TimeUnit.SECONDS.sleep(config.getPollTimer());
-            if (pull()) {
+            if (listenFlag && pull() && listenFlag) {
                 notice.on();
             }
         }

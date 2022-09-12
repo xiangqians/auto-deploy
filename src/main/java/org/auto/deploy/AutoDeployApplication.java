@@ -12,6 +12,8 @@ import org.auto.deploy.support.deployment.StaticDeployment;
 import org.auto.deploy.support.source.GitSource;
 import org.auto.deploy.support.source.LocalSource;
 import org.auto.deploy.support.source.Source;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -23,7 +25,7 @@ import java.io.IOException;
  * @date 20:50 2022/09/09
  */
 @Slf4j
-public class AutoDeployApplication implements Closeable {
+public class AutoDeployApplication implements SignalHandler, Closeable {
 
     private Config config;
     private Server server;
@@ -32,6 +34,16 @@ public class AutoDeployApplication implements Closeable {
     private Deployment deployment;
 
     public void run() throws Exception {
+
+        // ========== addShutdownHook
+//        log.debug("addShutdownHook ...");
+//        addShutdownHook();
+//        log.debug("addedShutdownHook!");
+
+        // ========== registerSignal
+        log.debug("registerSignal ...");
+        registerSignal();
+        log.debug("registered signal!");
 
         // ========== init
 
@@ -106,6 +118,48 @@ public class AutoDeployApplication implements Closeable {
         log.debug("已部署!");
     }
 
+    /**
+     * 注册信号
+     */
+    private void registerSignal() {
+        // Linux(具体信号kill -l命令查看) & Windows 信号支持
+        Signal.handle(new Signal("TERM"), this);
+        Signal.handle(new Signal("INT"), this);
+
+        // Linux: kill $pid or kill -15 $pid
+        // Windows: Ctrl + C
+    }
+
+    /**
+     * 在JVM中增加一个关闭的钩子。
+     */
+    private void addShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                AutoDeployApplication.this.close();
+            } catch (Exception e) {
+                log.error("", e);
+            }
+        }));
+    }
+
+    /**
+     * 处理信号
+     *
+     * @param signal
+     */
+    @Override
+    public void handle(Signal signal) {
+        log.debug("signal: {}", signal);
+
+        if (source instanceof GitSource) {
+            ((GitSource) source).setListenFlag(false);
+        }
+
+        //System.exit(0);
+
+    }
+
     @Override
     public void close() throws IOException {
         IOUtils.closeQuietly(server, source, builder, deployment);
@@ -122,6 +176,7 @@ public class AutoDeployApplication implements Closeable {
             application.run();
         } finally {
             IOUtils.closeQuietly(application);
+            log.debug("关闭自动化部署应用资源");
         }
     }
 

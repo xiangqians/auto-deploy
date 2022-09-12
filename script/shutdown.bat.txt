@@ -1,2 +1,0 @@
-jps
-taskkill /PID 进程号 -f -t
