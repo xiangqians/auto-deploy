@@ -36,12 +36,12 @@ public class AutoDeployApplication implements SignalHandler, Closeable {
     public void run() throws Exception {
 
         // ========== addShutdownHook
-//        log.debug("addShutdownHook ...");
+//        log.debug("add shutdown hook ...");
 //        addShutdownHook();
-//        log.debug("addedShutdownHook!");
+//        log.debug("added shutdown hook!");
 
         // ========== registerSignal
-        log.debug("registerSignal ...");
+        log.debug("register signal ...");
         registerSignal();
         log.debug("registered signal!");
 
@@ -95,7 +95,6 @@ public class AutoDeployApplication implements SignalHandler, Closeable {
 
         // ========== execute
 
-        server.connect();
         switch (config.getSource().getType()) {
             case LOCAL:
                 buildAndDeploy();
@@ -109,13 +108,20 @@ public class AutoDeployApplication implements SignalHandler, Closeable {
     }
 
     private void buildAndDeploy() throws Exception {
-        log.debug("building ...");
-        builder.build();
-        log.debug("built!");
+        try {
+            log.debug("building ...");
+            builder.build();
+            log.debug("built!");
 
-        log.debug("部署中 ...");
-        deployment.deploy();
-        log.debug("已部署!");
+            // 连接到服务
+            server.connect();
+
+            log.debug("部署中 ...");
+            deployment.deploy();
+            log.debug("已部署!");
+        } finally {
+            IOUtils.closeQuietly(server);
+        }
     }
 
     /**

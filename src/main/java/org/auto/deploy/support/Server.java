@@ -189,6 +189,9 @@ public class Server implements Closeable {
     @Override
     public void close() throws IOException {
         IOUtils.closeQuietly(ssh, sftp);
+        ssh = null;
+        sftp = null;
+        absoluteWorkDir = null;
     }
 
 }
