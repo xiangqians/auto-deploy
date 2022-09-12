@@ -12,13 +12,9 @@ import org.auto.deploy.support.deployment.StaticDeployment;
 import org.auto.deploy.support.source.GitSource;
 import org.auto.deploy.support.source.LocalSource;
 import org.auto.deploy.support.source.Source;
-import org.auto.deploy.util.Assert;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 
 /**
  * 自动化部署应用
@@ -112,16 +108,14 @@ public class AutoDeployApplication implements Closeable {
 
     @Override
     public void close() throws IOException {
-        IOUtils.closeQuietly(server, source);
+        IOUtils.closeQuietly(server, source, builder, deployment);
+        server = null;
+        source = null;
+        builder = null;
+        deployment = null;
     }
 
     public static void main(String[] args) throws Exception {
-
-//        String configLocation = "E:\\workspace\\idea-my\\auto-deploy\\src\\test\\resources\\config.yml";
-//        configLocation = "E:\\workspace\\idea-my\\auto-deploy\\config\\config.yml";
-//        configLocation = "C:\\Users\\xiangqian\\Desktop\\tmp\\config\\config.yml";
-//        System.setProperty("auto.deploy.config.location", configLocation);
-
         AutoDeployApplication application = null;
         try {
             application = new AutoDeployApplication();

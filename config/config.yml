@@ -66,7 +66,7 @@ deployment:
   static:
     # 部署位置
     location: /opt/html
-    # 打包后文件位置，相对路径（支持通配符 '*'）
+    # 打包后文件位置，相对路径（仅 ${deployment.static.pkg-file} 支持通配符 '*'）
     # 示例：
     # 1、如果 ${deployment.static.pkg-file}=./desc，  将会把 ./desc 文件发布到         ${deployment.static.location} 位置
     # 2、如果 ${deployment.static.pkg-file}=./desc/*，将会把 ./desc 目录下的文件集发布到 ${deployment.static.location} 位置
@@ -85,7 +85,7 @@ deployment:
       # 相对路径的附加文件或目录
       - ./test
       # 绝对路径的附加文件或目录
-      - /opt/auto-deploy/conf
+      - /opt/auto-deploy/config
 
   # jar docker部署
   jar-docker:

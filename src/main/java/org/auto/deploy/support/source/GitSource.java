@@ -128,6 +128,10 @@ public class GitSource implements Source {
             return;
         }
 
+        // init
+        get();
+
+        // poll
         while (true) {
             TimeUnit.SECONDS.sleep(config.getPollTimer());
             if (pull()) {

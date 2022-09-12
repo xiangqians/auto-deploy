@@ -61,6 +61,12 @@
         <!-- snakeyaml -->
         <snakeyaml.version>1.31</snakeyaml.version>
 
+        <!-- maven-resources-plugin -->
+        <maven-resources-plugin.version>3.2.0</maven-resources-plugin.version>
+
+        <!-- maven-compiler-plugin -->
+        <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
+
         <!-- maven-assembly-plugin -->
         <maven-assembly-plugin.version>3.4.2</maven-assembly-plugin.version>
 
@@ -206,11 +212,58 @@
         </resources>
 
         <plugins>
+
+            <!-- https://maven.apache.org/plugins/maven-resources-plugin/ -->
+            <!-- https://maven.apache.org/plugins/maven-resources-plugin/examples/ -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${maven-resources-plugin.version}</version>
+                <executions>
+                    <!-- copy script -->
+                    <execution>
+                        <id>copy-script</id>
+
+                        <!-- 在validate阶段执行 -->
+                        <phase>validate</phase>
+
+                        <!--
+                        最经常使用的两个goal:
+                        1、resources：这是process-resources阶段的默认goal, 在不配置任何参数的状况下，将默认使用build.resources中的目录做为源路径，将build.outputDirectory做为目标路径（其实是这目录下的classes）
+                        2、copy-resources：须要明确的指定源路径和目标路径.
+                        -->
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+
+                        <configuration>
+                            <!-- 输出到指定路径 -->
+                            <outputDirectory>${project.basedir}/target/classes</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <!-- 资源路径 -->
+                                    <directory>${project.basedir}/script</directory>
+
+                                    <!-- 开启资源文件插值操做 -->
+                                    <filtering>true</filtering>
+
+                                    <includes>
+                                        <include>*</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                            <!-- 若是配置为true,则本操做不被执行 -->
+                            <skip>false</skip>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
+                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <target>${maven.compiler.target}</target>
                     <source>${maven.compiler.source}</source>
@@ -231,7 +284,7 @@
                     <!--
                      | 注意：如果没有配置appendAssemblyId为false，那么打包出来的jar包会带有jar-with-dependencies，引入该库依赖的时候需要使用classifier，
                      |例如：<classifier>jar-with-dependencies</classifier>
-                     -->
+                     |-->
                     <appendAssemblyId>false</appendAssemblyId>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
@@ -257,8 +310,21 @@
                             <goal>single</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <id>archive-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>${project.basedir}/assembly/assembly.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
+
         </plugins>
     </build>
 

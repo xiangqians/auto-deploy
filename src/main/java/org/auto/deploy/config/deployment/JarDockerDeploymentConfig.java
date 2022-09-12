@@ -3,6 +3,7 @@ package org.auto.deploy.config.deployment;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.ToString;
 import org.auto.deploy.util.Assert;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.Objects;
  * @date 01:11 2022/09/10
  */
 @Data
+@ToString(callSuper = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JarDockerDeploymentConfig extends JarDeploymentConfig {
 

@@ -33,15 +33,12 @@ public abstract class AbstractDeployment implements Deployment {
 
     public AbstractDeployment(Server server) {
         this.server = server;
-        this.tempDir = Path.of(FileUtils.getTempDirectoryPath(), String.format("temp_%s", UUID.randomUUID().toString().replace("-", ""))).toFile();
-        if (!this.tempDir.exists()) {
-            this.tempDir.mkdir();
-        }
     }
 
     @Override
     public final void deploy() throws Exception {
         try {
+            createTempDir();
             init();
             clean();
             compress();
@@ -50,20 +47,7 @@ public abstract class AbstractDeployment implements Deployment {
             deleteArchive();
             afterPost();
         } finally {
-            if (Objects.nonNull(tempDir)) {
-                try {
-                    FileUtils.forceDelete(tempDir);
-                } catch (Exception e) {
-                    log.error("", e);
-                }
-            }
-            if (Objects.nonNull(tempTarGzFile)) {
-                try {
-                    FileUtils.forceDelete(tempTarGzFile);
-                } catch (Exception e) {
-                    log.error("", e);
-                }
-            }
+            close();
         }
     }
 
@@ -115,6 +99,14 @@ public abstract class AbstractDeployment implements Deployment {
     }
 
     protected abstract void init() throws Exception;
+
+    private void createTempDir() {
+        tempDir = Path.of(FileUtils.getTempDirectoryPath(), String.format("temp_%s", UUID.randomUUID().toString().replace("-", ""))).toFile();
+        if (!tempDir.exists()) {
+            tempDir.mkdir();
+        }
+        log.debug("创建临时目录!\n\t", tempDir.getAbsolutePath());
+    }
 
     // ====================
 
@@ -300,6 +292,28 @@ public abstract class AbstractDeployment implements Deployment {
                 return JacksonUtils.toJson(value);
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            }
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (Objects.nonNull(tempTarGzFile)) {
+            try {
+                FileUtils.forceDelete(tempTarGzFile);
+            } catch (Exception e) {
+                log.error("", e);
+            } finally {
+                tempTarGzFile = null;
+            }
+        }
+        if (Objects.nonNull(tempDir)) {
+            try {
+                FileUtils.forceDelete(tempDir);
+            } catch (Exception e) {
+                log.error("", e);
+            } finally {
+                tempDir = null;
             }
         }
     }

@@ -1,4 +1,4 @@
-PROCESS=`jps | grep auto-deploy-2022.7.jar | awk '{print $1}'`
+PROCESS=`jps | grep ${pkg.name}.jar | awk '{print $1}'`
 for i in $PROCESS
 do
         echo "Kill the $1 process [ $i ]"

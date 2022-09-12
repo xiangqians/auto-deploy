@@ -8,6 +8,8 @@ import org.auto.deploy.support.source.Source;
 import org.auto.deploy.util.CmdUtils;
 import org.auto.deploy.util.OS;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +20,7 @@ import java.util.List;
  * @date 12:32 2022/09/10
  */
 @Slf4j
-public class Builder {
+public class Builder implements Closeable {
 
     private BuilderConfig config;
     private Source source;
@@ -57,6 +59,10 @@ public class Builder {
                 break;
         }
         return cd;
+    }
+
+    @Override
+    public void close() throws IOException {
     }
 
 }
