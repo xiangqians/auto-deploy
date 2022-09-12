@@ -135,7 +135,7 @@ public class JSchShellChannelSshImpl extends JSchSupport implements Ssh, Runnabl
             // 如果channel已关闭时
             if (channel.isClosed()) {
                 String exitStatus = String.format("exit-status: %s", Optional.ofNullable(channel).map(Channel::getExitStatus).orElse(null));
-                System.out.println(exitStatus);
+                log.debug("exitStatus: {}", exitStatus);
                 break;
             }
 

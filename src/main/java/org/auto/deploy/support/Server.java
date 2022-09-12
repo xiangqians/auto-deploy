@@ -85,13 +85,13 @@ public class Server implements Closeable {
      */
     public void executeCmd(String cmd, Duration timeout, boolean isIgnoreError) throws Exception {
         if (isIgnoreError) {
-            executeCmd(cmd, timeout, new Consumer<>() {
-                @Override
-                public void accept(String result) {
+            List<String> results = new ArrayList<>();
+            executeCmd(cmd, timeout, (result) -> {
 //                System.out.format("[%03d] %s", index++, result).println();
-                    System.out.format("%s", result).println();
-                }
+                System.out.format("%s", result).println();
+                results.add(result);
             });
+            log.debug("<ssh> {}\n{}", cmd, StringUtils.join(results, "\n"));
             return;
         }
 
