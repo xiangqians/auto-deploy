@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.auto.deploy.util.CmdUtils;
 import org.junit.Test;
 
-import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * @author xiangqian
@@ -14,10 +14,10 @@ import java.io.IOException;
 public class CmdUtilsTest {
 
     @Test
-    public void test() throws IOException {
-        String cmd = "java";
-        CmdUtils.execute(cmd, "GBK", System.out::println);
+    public void test() throws Exception {
+        String[] cmdArray = new String[]{"java", "-version"};
+        int exitValue = CmdUtils.execute(cmdArray, Charset.forName("GBK"), System.out::println, System.err::println);
+        log.debug("exitValue: {}", exitValue);
     }
-
 
 }
