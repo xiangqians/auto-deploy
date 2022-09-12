@@ -80,7 +80,7 @@ public class GitSource implements Source {
     /**
      * @return 是否是最新代码
      */
-    private synchronized boolean pull() throws Exception {
+    public synchronized boolean pull() throws Exception {
         // repo
         Repository localRepo = git.getRepository();
 
@@ -138,7 +138,11 @@ public class GitSource implements Source {
 
         // poll
         while (listenFlag) {
-            TimeUnit.SECONDS.sleep(config.getPollTimer());
+            try {
+                TimeUnit.SECONDS.sleep(config.getPollTimer());
+            } catch (InterruptedException e) {
+                log.error("主线程被中断了", e);
+            }
             if (listenFlag && pull() && listenFlag) {
                 notice.on();
             }

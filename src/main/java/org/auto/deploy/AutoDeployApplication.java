@@ -12,6 +12,7 @@ import org.auto.deploy.support.deployment.StaticDeployment;
 import org.auto.deploy.support.source.GitSource;
 import org.auto.deploy.support.source.LocalSource;
 import org.auto.deploy.support.source.Source;
+import org.auto.deploy.util.OS;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -27,14 +28,23 @@ import java.io.IOException;
 @Slf4j
 public class AutoDeployApplication implements SignalHandler, Closeable {
 
+    // 主线线程
+    private Thread mainThread;
+
     private Config config;
     private Server server;
     private Source source;
     private Builder builder;
     private Deployment deployment;
 
-    public void run() throws Exception {
+    private volatile boolean deploying;
 
+    public AutoDeployApplication() {
+        this.mainThread = Thread.currentThread();
+    }
+
+    public void run() throws Exception {
+	
         // ========== addShutdownHook
 //        log.debug("add shutdown hook ...");
 //        addShutdownHook();
@@ -125,15 +135,63 @@ public class AutoDeployApplication implements SignalHandler, Closeable {
     }
 
     /**
-     * 注册信号
+     * 注册 Linux(具体信号kill -l命令查看) & Windows 信号
+     * $ kill -l
+     * 1) SIGHUP       2) SIGINT       3) SIGQUIT      4) SIGILL       5) SIGTRAP
+     * 6) SIGABRT      7) SIGBUS       8) SIGFPE       9) SIGKILL     10) SIGUSR1
+     * 11) SIGSEGV     12) SIGUSR2     13) SIGPIPE     14) SIGALRM     15) SIGTERM
+     * 16) SIGSTKFLT   17) SIGCHLD     18) SIGCONT     19) SIGSTOP     20) SIGTSTP
+     * 21) SIGTTIN     22) SIGTTOU     23) SIGURG      24) SIGXCPU     25) SIGXFSZ
+     * 26) SIGVTALRM   27) SIGPROF     28) SIGWINCH    29) SIGIO       30) SIGPWR
+     * 31) SIGSYS      34) SIGRTMIN    35) SIGRTMIN+1  36) SIGRTMIN+2  37) SIGRTMIN+3
+     * 38) SIGRTMIN+4  39) SIGRTMIN+5  40) SIGRTMIN+6  41) SIGRTMIN+7  42) SIGRTMIN+8
+     * 43) SIGRTMIN+9  44) SIGRTMIN+10 45) SIGRTMIN+11 46) SIGRTMIN+12 47) SIGRTMIN+13
+     * 48) SIGRTMIN+14 49) SIGRTMIN+15 50) SIGRTMAX-14 51) SIGRTMAX-13 52) SIGRTMAX-12
+     * 53) SIGRTMAX-11 54) SIGRTMAX-10 55) SIGRTMAX-9  56) SIGRTMAX-8  57) SIGRTMAX-7
+     * 58) SIGRTMAX-6  59) SIGRTMAX-5  60) SIGRTMAX-4  61) SIGRTMAX-3  62) SIGRTMAX-2
+     * 63) SIGRTMAX-1  64) SIGRTMAX
      */
     private void registerSignal() {
-        // Linux(具体信号kill -l命令查看) & Windows 信号支持
+        // SIGTERM(15): 终止进程 - 软件终止信号
+        // Linux: kill $pid or kill -15 $pid
         Signal.handle(new Signal("TERM"), this);
+
+        // SIGINT(2): 终止进程 - 中断进程，在用户键入INTR字符（通常是 Ctrl + C）时发出
+        // Windows: Ctrl + C
         Signal.handle(new Signal("INT"), this);
 
-        // Linux: kill $pid or kill -15 $pid
-        // Windows: Ctrl + C
+        if (OS.get() == OS.LINUX) {
+            // SIGUSR1(10): 终止进程 - 用户定义信号1
+            Signal.handle(new Signal("USR1"), this);
+
+            // SIGUSR2(12): 终止进程 - 用户定义信号2
+            //Signal.handle(new Signal("USR2"), this);
+        }
+    }
+
+    /**
+     * 处理信号
+     *
+     * @param signal
+     */
+    @Override
+    public void handle(Signal signal) {
+        log.debug("{}: {}) {}", signal, signal.getNumber(), signal.getName());
+        String name = signal.getName();
+        // 优雅地关闭应用
+        if (name.equals("TERM") || name.equals("INT")) {
+            if (source instanceof GitSource) {
+                log.debug("优雅地关闭应用!");
+                ((GitSource) source).setListenFlag(false);
+            }
+        }
+        // 触发部署
+        else if (name.equals("USR1")) {
+            log.debug("触发部署!");
+            mainThread.interrupt();
+        }
+
+
     }
 
     /**
@@ -147,23 +205,6 @@ public class AutoDeployApplication implements SignalHandler, Closeable {
                 log.error("", e);
             }
         }));
-    }
-
-    /**
-     * 处理信号
-     *
-     * @param signal
-     */
-    @Override
-    public void handle(Signal signal) {
-        log.debug("signal: {}", signal);
-
-        if (source instanceof GitSource) {
-            ((GitSource) source).setListenFlag(false);
-        }
-
-        //System.exit(0);
-
     }
 
     @Override
@@ -182,7 +223,7 @@ public class AutoDeployApplication implements SignalHandler, Closeable {
             application.run();
         } finally {
             IOUtils.closeQuietly(application);
-            log.debug("关闭自动化部署应用资源");
+            log.debug("已关闭自动化部署应用资源");
         }
     }
 
