@@ -46,8 +46,11 @@ source:
     poll-timer: 30
 
 
-# 构建器配置
-builder:
+# 构建命令配置
+build-cmd:
+  # 构建命令根路径
+  root: E:\build-tools\apache-maven-3.6.0\bin
+
   # 构建命令集
   cmds:
     # maven clean命令

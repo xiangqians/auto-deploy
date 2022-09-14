@@ -20,22 +20,11 @@
         <!-- skipTests -->
         <skipTests>true</skipTests>
 
-        <!-- pkg name -->
-        <pkg.name>${project.name}-${project.version}</pkg.name>
-
-        <!-- mainClass -->
-        <main.class>org.auto.deploy.AutoDeployApplication</main.class>
-
         <!-- lombok -->
         <lombok.version>1.18.18</lombok.version>
 
         <!-- junit -->
         <junit.version>4.11</junit.version>
-
-        <!-- log4j -->
-        <slf4j.version>1.7.25</slf4j.version>
-        <slf4j-log4j12.version>1.7.25</slf4j-log4j12.version>
-        <log4j.version>1.2.17</log4j.version>
 
         <!-- commons -->
         <commons-lang3.version>3.12.0</commons-lang3.version>
@@ -43,7 +32,6 @@
         <commons-io.version>2.11.0</commons-io.version>
         <commons-text.version>1.9</commons-text.version>
         <commons-compress.version>1.21</commons-compress.version>
-        <commons-cli.version>1.5.0</commons-cli.version>
 
         <!-- jsch -->
         <jsch.version>0.1.55</jsch.version>
@@ -61,18 +49,68 @@
         <!-- snakeyaml -->
         <snakeyaml.version>1.31</snakeyaml.version>
 
-        <!-- maven-resources-plugin -->
-        <maven-resources-plugin.version>3.2.0</maven-resources-plugin.version>
-
-        <!-- maven-compiler-plugin -->
-        <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
-
-        <!-- maven-assembly-plugin -->
-        <maven-assembly-plugin.version>3.4.2</maven-assembly-plugin.version>
+        <!-- spring-boot-dependencies -->
+        <spring-boot-dependencies.version>2.5.14</spring-boot-dependencies.version>
 
     </properties>
 
     <dependencies>
+
+        <!-- spring-boot-starter-thymeleaf -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- spring-boot-starter-security -->
+        <!--
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        -->
+
+        <!-- caffeine -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
+        <!-- spring-boot-starter-cache -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+
+        <!-- spring-boot-starter-web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- spring-boot-starter-jetty -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jetty</artifactId>
+        </dependency>
+
+        <!-- spring-boot-configuration-processor -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- spring-boot-starter-aop -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
 
         <!-- jackson -->
         <!-- jackson-core -->
@@ -155,30 +193,9 @@
             <artifactId>commons-compress</artifactId>
             <version>${commons-compress.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/commons-cli/commons-cli -->
         <dependency>
-            <groupId>commons-cli</groupId>
-            <artifactId>commons-cli</artifactId>
-            <version>${commons-cli.version}</version>
-        </dependency>
-
-        <!-- slf4j -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-
-        <!-- log4j -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>${slf4j-log4j12.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>${log4j.version}</version>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
         </dependency>
 
         <!-- junit -->
@@ -199,132 +216,69 @@
 
     </dependencies>
 
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- https://spring.io/projects/spring-boot#learn -->
+            <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-dependencies -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot-dependencies.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
     <build>
-        <finalName>${pkg.name}</finalName>
+        <finalName>${project.name}-${project.version}</finalName>
 
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
+                <filtering>true</filtering>
                 <includes>
-                    <include>**/*</include>
+                    <include>*.yml</include>
+                    <include>*.xml</include>
+                    <include>templates/**</include>
+                </includes>
+            </resource>
+
+            <!-- 静态资源不需要过滤，否则会导致某些文件（例如：icomoon.woff、icomoon.ttf等等）访问异常 -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>static/**</include>
+                    <include>config/**</include>
                 </includes>
             </resource>
         </resources>
 
         <plugins>
-
-            <!-- https://maven.apache.org/plugins/maven-resources-plugin/ -->
-            <!-- https://maven.apache.org/plugins/maven-resources-plugin/examples/ -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>${maven-resources-plugin.version}</version>
-                <executions>
-                    <!-- copy script -->
-                    <execution>
-                        <id>copy-script</id>
-
-                        <!-- 在validate阶段执行 -->
-                        <phase>validate</phase>
-
-                        <!--
-                        最经常使用的两个goal:
-                        1、resources：这是process-resources阶段的默认goal, 在不配置任何参数的状况下，将默认使用build.resources中的目录做为源路径，将build.outputDirectory做为目标路径（其实是这目录下的classes）
-                        2、copy-resources：须要明确的指定源路径和目标路径.
-                        -->
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-
-                        <configuration>
-                            <!-- 输出到指定路径 -->
-                            <outputDirectory>${project.basedir}/target/classes</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <!-- 资源路径 -->
-                                    <directory>${project.basedir}/script</directory>
-
-                                    <!-- 开启资源文件插值操做 -->
-                                    <filtering>true</filtering>
-
-                                    <includes>
-                                        <include>*</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                            <!-- 若是配置为true,则本操做不被执行 -->
-                            <skip>false</skip>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <target>${maven.compiler.target}</target>
                     <source>${maven.compiler.source}</source>
-                    <encoding>UTF-8</encoding>
+                    <target>${maven.compiler.target}</target>
                 </configuration>
             </plugin>
 
-            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
-            <!-- maven打包项目，包含第三方库依赖 -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>${maven-assembly-plugin.version}</version>
-                <configuration>
-                    <finalName>${pkg.name}</finalName>
-                    <encoding>utf-8</encoding>
-
-                    <!--
-                     | 注意：如果没有配置appendAssemblyId为false，那么打包出来的jar包会带有jar-with-dependencies，引入该库依赖的时候需要使用classifier，
-                     |例如：<classifier>jar-with-dependencies</classifier>
-                     |-->
-                    <appendAssemblyId>false</appendAssemblyId>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>${main.class}</mainClass>
-                        </manifest>
-                    </archive>
-                    <!--
-                    <descriptors>
-                        <descriptor>${project.basedir}/assembly/assembly.xml</descriptor>
-                    </descriptors>
-                    -->
-                </configuration>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot-dependencies.version}</version>
                 <executions>
                     <execution>
-                        <id>assembly</id>
-                        <!-- none,package -->
-                        <phase>package</phase>
                         <goals>
-                            <!-- single -->
-                            <goal>single</goal>
+                            <goal>repackage</goal>
                         </goals>
-                    </execution>
-                    <execution>
-                        <id>archive-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>${project.basedir}/assembly/assembly.xml</descriptor>
-                            </descriptors>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
 

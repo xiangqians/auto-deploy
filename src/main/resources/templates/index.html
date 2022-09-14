@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Index</title>
+
+    <style>
+
+        .text-center {
+            text-align: center;
+        }
+
+    </style>
+
+</head>
+<body>
+
+<h1 style="margin-left: 10px">Auto Deploy</h1>
+
+<div>
+    <h3 style="margin-left: 10px">Items</h3>
+    <table id="items" style="margin-left: 30px">
+        <tr>
+            <td class="text-center" style="width: 30px;">No</td>
+            <td>Item</td>
+            <td class="text-center" style="width: 180px;">LastDeployTime</td>
+            <td class="text-center" style="width: 140px;" colspan="2">Config</td>
+        </tr>
+        <tr th:each="item:${items}">
+            <td class="text-center" th:text="${itemStat.index+1}"></td>
+
+            <!--
+             | 1-执行正常且线程还在监听中（greed）
+             | 2-执行正常但线程已结束（black）
+             | 3-执行异常且线程已结束（red）
+             | 4-执行异常但线程还在监听中（yellow）
+             | n-未知状态
+             |-->
+            <td>
+                <div th:title="${item.name}">
+                    <a target="_blank"
+                       th:href="'/' + ${item.name}"
+                       th:text="${item.name}"
+                       th:style="'color: ' + (${item.status} == 1 ? 'green;': (${item.status} == 2 ? 'black;' : (${item.status} == 3 ? 'red;' : (${item.status} == 4 ? '#FFD700;' : '#F5F5F5;'))))"></a>
+                </div>
+            </td>
+
+            <td class="text-center" th:text="${#temporals.format(item.lastDeployTime,'yyyy-MM-dd HH:mm:ss')}"></td>
+            <td class="text-center" style="width: 70px;">
+                <a target="_blank" th:href="'/item/' + ${item.name} + '/config/core.yml'">core.yml</a>
+            </td>
+            <td class="text-center" style="width: 70px;">
+                <a target="_blank" th:href="'/item/' + ${item.name} + '/config/jar/docker/Dockerfile'">Dockerfile</a>
+            </td>
+        </tr>
+
+    </table>
+</div>
+<br>
+
+<div>
+    <h3 style="margin-left: 10px">Help</h3>
+    <table style="margin-left: 30px">
+        <tr>
+            <td>
+                <a href="javascript:void(0);" onclick="logout()">Logout</a>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <a href="javascript:void(0);" onclick="shutdown()">Shutdown</a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>
+
+<!-- jquery.js -->
+<script th:src="${#request.contextPath} + '/jquery-3.6.0/main.min.js'"></script>
+
+<!-- utils.js -->
+<script th:src="${#request.contextPath} + '/utils.js'"></script>
+
+<script th:inline="javascript">
+
+    let utilsModule = UtilsModule();
+
+    // context-path
+    const contextPath = [[${#httpServletRequest.getContextPath()}]] + '';
+
+    // +
+    let $tr = $('<tr></tr>');
+    let $td = $('<td colspan="4"></td>');
+    let $btn = $('<button>+</button>');
+    $btn.on('click', function () {
+        let itemName = prompt("请输入预部署项目名称（必须以字母开头，并且只能输入字母、数字、下划线、横杠，长度不能超过32个字符）");
+        if (itemName == null) {
+            return;
+        }
+
+        itemName = itemName.trim();
+        if ('' === itemName) {
+            alert('项目名不能为空!');
+            return;
+        }
+
+        // 以字母开头，包括字母、数字、下划线、横杠
+        // ^[a-zA-Z][a-zA-Z0-9_-]*$
+        let pattern = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
+        if (!pattern.test(itemName)) {
+            alert('预部署项目名称必须以字母开头，并且只能输入字母、数字、下划线、横杠!');
+            return;
+        }
+
+        // length < 32
+        if (itemName.length > 32) {
+            alert('预部署项目名称不能超过32个字符!');
+            return;
+        }
+
+        // add
+        // console.log(itemName);
+        let url = contextPath + '/item/add/' + itemName;
+        utilsModule.Utils.Http.post(url, null, function (resp) {
+            // console.log(resp);
+            location.reload(false);
+
+        }, function (resp) {
+            alert(JSON.stringify(resp))
+        });
+    });
+    $btn.appendTo($td);
+    $td.appendTo($tr);
+    $tr.appendTo($('#items'));
+
+
+    function logout() {
+        let result = confirm('Logout ?');
+        if (result) {
+            window.location.href = contextPath + '/logout';
+        }
+    }
+
+    function shutdown() {
+        let result = confirm('Shutdown ?');
+        if (result) {
+            window.location.href = contextPath + '/shutdown';
+        }
+    }
+
+</script>

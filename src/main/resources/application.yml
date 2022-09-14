@@ -1,0 +1,23 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+    session:
+      persistent: false
+
+spring:
+  application:
+    name: @artifactId@
+    version: @version@
+
+  # thymeleaf
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+
+  # security
+  security:
+    user:
+      name: admin
+      password: admin

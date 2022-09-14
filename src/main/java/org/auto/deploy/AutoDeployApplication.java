@@ -13,6 +13,10 @@ import org.auto.deploy.support.source.GitSource;
 import org.auto.deploy.support.source.LocalSource;
 import org.auto.deploy.support.source.Source;
 import org.auto.deploy.util.OS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
@@ -26,7 +30,12 @@ import java.io.IOException;
  * @date 20:50 2022/09/09
  */
 @Slf4j
+@SpringBootApplication
 public class AutoDeployApplication implements SignalHandler, Closeable {
+
+    public static void main(String[] args) {
+        SpringApplication.run(AutoDeployApplication.class, args);
+    }
 
     // 主线线程
     private Thread mainThread;
@@ -40,6 +49,10 @@ public class AutoDeployApplication implements SignalHandler, Closeable {
     private volatile boolean deploying;
 
     public AutoDeployApplication() {
+        Logger log  = LoggerFactory.getLogger("test123456");
+        log.debug("---------------debug---------------------");
+        log.info("------------------info------------------");
+        log.warn("--------------warn----------------------");
         this.mainThread = Thread.currentThread();
     }
 
@@ -216,7 +229,7 @@ public class AutoDeployApplication implements SignalHandler, Closeable {
         deployment = null;
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main2(String[] args) throws Exception {
         AutoDeployApplication application = null;
         try {
             application = new AutoDeployApplication();
