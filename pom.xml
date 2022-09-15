@@ -251,8 +251,9 @@
                 <directory>src/main/resources</directory>
                 <filtering>false</filtering>
                 <includes>
-                    <include>static/**</include>
                     <include>config/**</include>
+                    <include>i18n/**</include>
+                    <include>static/**</include>
                 </includes>
             </resource>
         </resources>

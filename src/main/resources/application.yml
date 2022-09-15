@@ -10,10 +10,18 @@ spring:
     name: @artifactId@
     version: @version@
 
+  # i18n
+  messages:
+    # baseName_local.properties
+    basename: i18n/message
+    encoding: UTF-8
+    cache-duration: 3600
+
   # thymeleaf
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
+    encoding: UTF-8
     cache: false
 
   # security

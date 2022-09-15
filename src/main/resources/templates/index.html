@@ -15,17 +15,17 @@
 </head>
 <body>
 
-<h1 style="margin-left: 10px">Auto Deploy</h1>
+<h1 style="margin-left: 10px" th:text="#{i18n.autoDeploy}"></h1>
 
 <div>
-    <h3 style="margin-left: 10px">Items</h3>
+    <h3 style="margin-left: 10px" th:text="#{i18n.items}"></h3>
 
     <table id="items" style="margin-left: 30px">
         <tr>
-            <td class="text-center" style="width: 30px; padding-right: 2px;">No</td>
-            <td style="padding-left: 2px; padding-right: 50px;">Item</td>
-            <td class="text-center" style="width: 120px">Status</td>
-            <td class="text-center" style="width: 180px;">LastDeployTime</td>
+            <td class="text-center" style="width: 60px; padding-right: 2px;" th:text="#{i18n.no}"></td>
+            <td style="padding-left: 2px; padding-right: 50px;" th:text="#{i18n.item}"></td>
+            <td class="text-center" style="width: 120px" th:text="#{i18n.status}"></td>
+            <td class="text-center" style="width: 180px;" th:text="#{i18n.lastDeployTime}"></td>
         </tr>
         <tr th:each="item:${items}">
             <td class="text-center" th:text="${itemStat.index+1}"></td>
@@ -35,7 +35,7 @@
                     <a href="javascript:void(0);" onclick="item(this)" th:text="${item.name}"></a>
                     <ul item-options style="position: absolute;  margin-top: 1px; background: #D3D3D3; display: none; ">
                         <li style="list-style-type:none; margin-top: 10px;">
-                            Config
+                            <span th:text="#{i18n.config}"></span>
                             <ul style="margin-right: 10px;">
                                 <li style="list-style-type:none; margin-top: 5px;">
                                     <a target="_blank"
@@ -48,16 +48,19 @@
                             </ul>
                         </li>
                         <li style="list-style-type:none; margin-top: 15px; margin-bottom: 10px;">
-                            Options
+                            <span th:text="#{i18n.options}"></span>
                             <ul style="margin-right: 10px;">
                                 <li style="list-style-type:none; margin-top: 5px;">
-                                    <a href="javascript:void(0);">Start</a>
+                                    <a href="javascript:void(0);" th:text="#{i18n.start}"></a>
                                 </li>
                                 <li style="list-style-type:none; margin-top: 5px;">
-                                    <a href="javascript:void(0);">Restart</a>
+                                    <a href="javascript:void(0);" th:text="#{i18n.restart}"></a>
                                 </li>
                                 <li style="list-style-type:none; margin-top: 5px;">
-                                    <a href="javascript:void(0);">Stop</a>
+                                    <a href="javascript:void(0);" th:text="#{i18n.stop}"></a>
+                                </li>
+                                <li style="list-style-type:none; margin-top: 5px;">
+                                    <a href="javascript:void(0);" th:text="#{i18n.rm}"></a>
                                 </li>
                             </ul>
                         </li>
@@ -84,16 +87,16 @@
 <br>
 
 <div>
-    <h3 style="margin-left: 10px">Help</h3>
+    <h3 style="margin-left: 10px" th:text="#{i18n.help}"></h3>
     <table style="margin-left: 30px">
         <tr>
             <td>
-                <a href="javascript:void(0);" onclick="logout()">Logout</a>
+                <a href="javascript:void(0);" onclick="logout()" th:text="#{i18n.logout}"></a>
             </td>
         </tr>
         <tr>
             <td>
-                <a href="javascript:void(0);" onclick="shutdown()">Shutdown</a>
+                <a href="javascript:void(0);" onclick="shutdown()" th:text="#{i18n.shutdown}"></a>
             </td>
         </tr>
     </table>
@@ -166,7 +169,7 @@
 
     // +
     let $tr = $('<tr></tr>');
-    let $td = $('<td colspan="4"></td>');
+    let $td = $('<td class="text-center" style="width: 60px; padding-right: 2px;"></td>');
     let $btn = $('<button>+</button>');
     $btn.on('click', function () {
         let itemName = prompt("请输入预部署项目名称（必须以字母开头，并且只能输入字母、数字、下划线、横杠，长度不能超过32个字符）");
@@ -207,6 +210,9 @@
     });
     $btn.appendTo($td);
     $td.appendTo($tr);
+    $('<td></td>').appendTo($tr);
+    $('<td></td>').appendTo($tr);
+    $('<td></td>').appendTo($tr);
     $tr.appendTo($('#items'));
 
     function item(element) {
