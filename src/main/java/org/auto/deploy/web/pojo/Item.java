@@ -24,6 +24,9 @@ public class Item {
     // 最新部署时间
     private LocalDateTime lastDeployTime;
 
+    // 最新部署信息
+    private String lastDeployMessage;
+
     // 项目状态
     private List<Integer> statuses;
 

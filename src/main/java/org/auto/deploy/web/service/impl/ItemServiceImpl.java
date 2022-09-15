@@ -79,11 +79,13 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<Item> queryForList() {
         Random random = new Random();
-        List<Integer> statuses = List.of(Optional.of(random.nextInt(4)).filter(status -> status > 0).orElse(1),
-                Optional.of(random.nextInt(4)).filter(status -> status > 0).orElse(1),
-                Optional.of(random.nextInt(4)).filter(status -> status > 0).orElse(1));
+        List<Integer> statuses = List.of(Optional.of(random.nextInt(6)).filter(status -> status > 0).orElse(1),
+                Optional.of(random.nextInt(6)).filter(status -> status > 0).orElse(1),
+                Optional.of(random.nextInt(6)).filter(status -> status > 0).orElse(1),
+                Optional.of(random.nextInt(6)).filter(status -> status > 0).orElse(1),
+                Optional.of(random.nextInt(6)).filter(status -> status > 0).orElse(1));
         List<Item> items = Arrays.stream(itemsDir.listFiles())
-                .map(file -> new Item(file.getName(), LocalDateTime.now(), statuses))
+                .map(file -> new Item(file.getName(), LocalDateTime.now(), "test1\ntest2\ntest3", statuses))
                 .collect(Collectors.toList());
         return items;
     }

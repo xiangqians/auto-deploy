@@ -64,15 +64,19 @@
                     </ul>
                 </div>
             </td>
+
             <td class="text-center">
-                <div th:title="${item.name} + '&#10;'">
+                <div>
                     <canvas width="120" height="10" style="border:1px solid #000000;" th:statuses="${item.statuses}">
                         您的浏览器不支持 HTML5 canvas 标签。
                     </canvas>
                 </div>
             </td>
 
-            <td class="text-center" th:text="${#temporals.format(item.lastDeployTime,'yyyy-MM-dd HH:mm:ss')}"></td>
+            <td class="text-center">
+                <div th:title="${item.lastDeployMessage}  "
+                     th:text="${#temporals.format(item.lastDeployTime,'yyyy-MM-dd HH:mm:ss')}"></div>
+            </td>
         </tr>
     </table>
 
@@ -106,32 +110,38 @@
 
 <script th:inline="javascript">
 
-    // 状态颜色映射
-    let statusColorMap = new Map();
+    // 状态映射
+    let statusInfoMap = new Map();
     // 1-运行中(greed, #90EE90)
-    statusColorMap.set(1, '#90EE90');
+    statusInfoMap.set(1, { color: '#90EE90', desc: '运行中' });
     // 2-部署中(Pink, #FFC0CB)
-    statusColorMap.set(2, '#FFC0CB');
-    // 3-部署完成(black, #87CEFA)
-    statusColorMap.set(3, '#87CEFA');
+    statusInfoMap.set(2, { color: '#FFC0CB', desc: '部署中' });
+    // 3-部署完成(#87CEFA)
+    statusInfoMap.set(3, { color: '#87CEFA', desc: '部署完成' });
     // 4-异常(red, #FF0000)
-    statusColorMap.set(4, '#FF0000');
+    statusInfoMap.set(4, { color: '#FF0000', desc: '异常' });
+    // 5-结束(black, #333333)
+    statusInfoMap.set(5, { color: '#333333', desc: '结束' });
 
     // canvas
     Array.from($('canvas')).forEach(canvas => {
         // ctx
         let ctx = canvas.getContext("2d");
 
+        let divTitleBuilder = [];
+
         // $canvas
         $canvas = $(canvas);
         let statuses = JSON.parse($canvas.attr('statuses'));
-        // console.log(statuses);
+        // console.log('statuses', statuses);
         let length = statuses.length;
         let x = 0;
         let width = 0;
         let widthIncr = Math.trunc(120 / length);
         for (let i = 0; i < length; i++) {
-            ctx.fillStyle = statusColorMap.get(statuses[i]);
+            let statusInfo = statusInfoMap.get(statuses[i]);
+            divTitleBuilder.push(statusInfo.desc);
+            ctx.fillStyle = statusInfo.color;
             if (i === length - 1) {
                 width = 120 - width;
             } else {
@@ -143,6 +153,10 @@
 
             x = width;
         }
+
+        let $div = $canvas.parent();
+        // console.log('$div', $div);
+        $div.attr('title', divTitleBuilder.join(' - '));
     });
 
     let utilsModule = UtilsModule();

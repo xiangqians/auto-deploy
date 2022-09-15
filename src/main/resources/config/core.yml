@@ -77,6 +77,9 @@ deployment:
     # 附加文件或目录集
     addl-files: [ ]
 
+  # 为了兼容微服务
+  jars: []
+
   # jar部署, java -jar xxx.jar
   jar:
     # java家目录
@@ -89,6 +92,9 @@ deployment:
       - ./test
       # 绝对路径的附加文件或目录
       - /opt/auto-deploy/config
+
+  # 为了兼容微服务
+  jar-dockers: [ ]
 
   # jar docker部署
   jar-docker:
