@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -78,8 +79,11 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<Item> queryForList() {
         Random random = new Random();
+        List<Integer> statuses = List.of(Optional.of(random.nextInt(4)).filter(status -> status > 0).orElse(1),
+                Optional.of(random.nextInt(4)).filter(status -> status > 0).orElse(1),
+                Optional.of(random.nextInt(4)).filter(status -> status > 0).orElse(1));
         List<Item> items = Arrays.stream(itemsDir.listFiles())
-                .map(file -> new Item(file.getName(), LocalDateTime.now(), random.nextInt(10)))
+                .map(file -> new Item(file.getName(), LocalDateTime.now(), statuses))
                 .collect(Collectors.toList());
         return items;
     }

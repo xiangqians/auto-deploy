@@ -11,10 +11,12 @@ import java.util.List;
  */
 public interface ItemService {
 
+    // update
     Boolean modifyConfigFileContent(String itemName, String fileName, String content) throws IOException;
 
     String getConfigFileContent(String itemName, String fileName) throws IOException;
 
+    // save
     Boolean add(String name) throws IOException;
 
     List<Item> queryForList();

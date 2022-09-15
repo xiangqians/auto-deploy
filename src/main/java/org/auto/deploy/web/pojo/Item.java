@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 项目信息
@@ -23,11 +24,7 @@ public class Item {
     // 最新部署时间
     private LocalDateTime lastDeployTime;
 
-    // 项目状态码
-    // 1-执行正常且线程还在监听中（greed）
-    // 2-执行正常但线程已结束（black）
-    // 3-执行异常且线程已结束（red）
-    // 4-执行异常但线程还在监听中（yellow）
-    private Integer status;
+    // 项目状态
+    private List<Integer> statuses;
 
 }

@@ -19,42 +19,63 @@
 
 <div>
     <h3 style="margin-left: 10px">Items</h3>
+
     <table id="items" style="margin-left: 30px">
         <tr>
-            <td class="text-center" style="width: 30px;">No</td>
-            <td>Item</td>
+            <td class="text-center" style="width: 30px; padding-right: 2px;">No</td>
+            <td style="padding-left: 2px; padding-right: 50px;">Item</td>
+            <td class="text-center" style="width: 120px">Status</td>
             <td class="text-center" style="width: 180px;">LastDeployTime</td>
-            <td class="text-center" style="width: 140px;" colspan="2">Config</td>
         </tr>
         <tr th:each="item:${items}">
             <td class="text-center" th:text="${itemStat.index+1}"></td>
 
-            <!--
-             | 1-执行正常且线程还在监听中（greed）
-             | 2-执行正常但线程已结束（black）
-             | 3-执行异常且线程已结束（red）
-             | 4-执行异常但线程还在监听中（yellow）
-             | n-未知状态
-             |-->
             <td>
-                <div th:title="${item.name}">
-                    <a target="_blank"
-                       th:href="'/' + ${item.name}"
-                       th:text="${item.name}"
-                       th:style="'color: ' + (${item.status} == 1 ? 'green;': (${item.status} == 2 ? 'black;' : (${item.status} == 3 ? 'red;' : (${item.status} == 4 ? '#FFD700;' : '#F5F5F5;'))))"></a>
+                <div>
+                    <a href="javascript:void(0);" onclick="item(this)" th:text="${item.name}"></a>
+                    <ul item-options style="position: absolute;  margin-top: 1px; background: #D3D3D3; display: none; ">
+                        <li style="list-style-type:none; margin-top: 10px;">
+                            Config
+                            <ul style="margin-right: 10px;">
+                                <li style="list-style-type:none; margin-top: 5px;">
+                                    <a target="_blank"
+                                       th:href="'/item/' + ${item.name} + '/config/core.yml'">core.yml</a>
+                                </li>
+                                <li style="list-style-type:none; margin-top: 5px;">
+                                    <a target="_blank"
+                                       th:href="'/item/' + ${item.name} + '/config/jar/docker/Dockerfile'">Dockerfile</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li style="list-style-type:none; margin-top: 15px; margin-bottom: 10px;">
+                            Options
+                            <ul style="margin-right: 10px;">
+                                <li style="list-style-type:none; margin-top: 5px;">
+                                    <a href="javascript:void(0);">Start</a>
+                                </li>
+                                <li style="list-style-type:none; margin-top: 5px;">
+                                    <a href="javascript:void(0);">Restart</a>
+                                </li>
+                                <li style="list-style-type:none; margin-top: 5px;">
+                                    <a href="javascript:void(0);">Stop</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </td>
+            <td class="text-center">
+                <div th:title="${item.name} + '&#10;'">
+                    <canvas width="120" height="10" style="border:1px solid #000000;" th:statuses="${item.statuses}">
+                        您的浏览器不支持 HTML5 canvas 标签。
+                    </canvas>
                 </div>
             </td>
 
             <td class="text-center" th:text="${#temporals.format(item.lastDeployTime,'yyyy-MM-dd HH:mm:ss')}"></td>
-            <td class="text-center" style="width: 70px;">
-                <a target="_blank" th:href="'/item/' + ${item.name} + '/config/core.yml'">core.yml</a>
-            </td>
-            <td class="text-center" style="width: 70px;">
-                <a target="_blank" th:href="'/item/' + ${item.name} + '/config/jar/docker/Dockerfile'">Dockerfile</a>
-            </td>
         </tr>
-
     </table>
+
 </div>
 <br>
 
@@ -84,6 +105,45 @@
 <script th:src="${#request.contextPath} + '/utils.js'"></script>
 
 <script th:inline="javascript">
+
+    // 状态颜色映射
+    let statusColorMap = new Map();
+    // 1-运行中(greed, #90EE90)
+    statusColorMap.set(1, '#90EE90');
+    // 2-部署中(Pink, #FFC0CB)
+    statusColorMap.set(2, '#FFC0CB');
+    // 3-部署完成(black, #87CEFA)
+    statusColorMap.set(3, '#87CEFA');
+    // 4-异常(red, #FF0000)
+    statusColorMap.set(4, '#FF0000');
+
+    // canvas
+    Array.from($('canvas')).forEach(canvas => {
+        // ctx
+        let ctx = canvas.getContext("2d");
+
+        // $canvas
+        $canvas = $(canvas);
+        let statuses = JSON.parse($canvas.attr('statuses'));
+        // console.log(statuses);
+        let length = statuses.length;
+        let x = 0;
+        let width = 0;
+        let widthIncr = Math.trunc(120 / length);
+        for (let i = 0; i < length; i++) {
+            ctx.fillStyle = statusColorMap.get(statuses[i]);
+            if (i === length - 1) {
+                width = 120 - width;
+            } else {
+                width = width + widthIncr;
+            }
+
+            // (x, y, w, h)
+            ctx.fillRect(x, 0, width, 10);
+
+            x = width;
+        }
+    });
 
     let utilsModule = UtilsModule();
 
@@ -135,6 +195,22 @@
     $td.appendTo($tr);
     $tr.appendTo($('#items'));
 
+    function item(element) {
+        let $ul = $(element).next();
+        // console.log('$ul', $ul);
+
+        let $uls = $.find('ul[item-options]');
+        // console.log('$uls', $uls);
+        $uls.forEach(_ul => _ul != $ul[0] && $(_ul).css('display', 'none'));
+
+        let display = null;
+        if ($ul.css('display') === 'none') {
+            display = 'block';
+        } else {
+            display = 'none';
+        }
+        $ul.css('display', display);
+    }
 
     function logout() {
         let result = confirm('Logout ?');
