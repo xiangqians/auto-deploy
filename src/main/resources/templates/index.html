@@ -5,11 +5,9 @@
     <title>Index</title>
 
     <style>
-
         .text-center {
             text-align: center;
         }
-
     </style>
 
 </head>
@@ -24,10 +22,13 @@
         <tr>
             <td class="text-center" style="width: 60px; padding-right: 2px;" th:text="#{i18n.no}"></td>
             <td style="padding-left: 2px; padding-right: 50px;" th:text="#{i18n.item}"></td>
-            <td class="text-center" style="width: 120px" th:text="#{i18n.status}"></td>
+            <td class="text-center" style="width: 200px" th:text="#{i18n.status}"></td>
             <td class="text-center" style="width: 180px;" th:text="#{i18n.lastDeployTime}"></td>
         </tr>
-        <tr th:each="item:${items}">
+        <tr th:each="item:${items}"
+            onmouseover="this.style.backgroundColor='#D3D3D3'"
+            onmouseout="this.style.backgroundColor='#FFFFFF'">
+
             <td class="text-center" th:text="${itemStat.index+1}"></td>
 
             <td>
@@ -64,13 +65,31 @@
                                 </li>
                             </ul>
                         </li>
+
+                        <li style="list-style-type:none; margin-top: 15px; margin-bottom: 10px;">
+                            <span th:text="#{i18n.logs}"></span>
+                            <ul style="margin-right: 10px; max-height: 200px; overflow:auto;">
+                                <li style="list-style-type:none; margin-top: 5px;">
+                                    <a href="javascript:void(0);">日志786979789789文件</a>
+                                </li>
+                                <li style="list-style-type:none; margin-top: 5px;">
+                                    <a href="javascript:void(0);">日志文件</a>
+                                </li>
+                                <li style="list-style-type:none; margin-top: 5px;">
+                                    <a href="javascript:void(0);">日志文7897889789件</a>
+                                </li>
+                                <li style="list-style-type:none; margin-top: 5px;">
+                                    <a href="javascript:void(0);">日志文件</a>
+                                </li>
+                            </ul>
+                        </li>
                     </ul>
                 </div>
             </td>
 
             <td class="text-center">
                 <div>
-                    <canvas width="120" height="10" style="border:1px solid #000000;" th:statuses="${item.statuses}">
+                    <canvas width="200" height="10" style="border:1px solid #000000;" th:statuses="${item.statuses}">
                         您的浏览器不支持 HTML5 canvas 标签。
                     </canvas>
                 </div>
@@ -140,13 +159,13 @@
         let length = statuses.length;
         let x = 0;
         let width = 0;
-        let widthIncr = Math.trunc(120 / length);
+        let widthIncr = Math.trunc(200 / length);
         for (let i = 0; i < length; i++) {
             let statusInfo = statusInfoMap.get(statuses[i]);
             divTitleBuilder.push(statusInfo.desc);
             ctx.fillStyle = statusInfo.color;
             if (i === length - 1) {
-                width = 120 - width;
+                width = 200 - width;
             } else {
                 width = width + widthIncr;
             }

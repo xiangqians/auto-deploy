@@ -18,6 +18,16 @@
     <conversionRule conversionWord="wEx"
                     converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
 
+    <!-- custom -->
+    <appender name="CUSTOM" class="org.auto.deploy.logback.CustomAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+    </appender>
+
     <!-- Console log output -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -36,10 +46,6 @@
             <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
             <maxHistory>${MAX_HISTORY}</maxHistory>
         </rollingPolicy>
-
-        <!-- 自定义过滤器 -->
-        <filter class="org.auto.deploy.logback.LogbackFilter"></filter>
-
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
@@ -131,6 +137,7 @@
     </logger>
 
     <root level="DEBUG">
+        <appender-ref ref="CUSTOM"/>
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="DEBUG_FILE"/>
         <appender-ref ref="INFO_FILE"/>
