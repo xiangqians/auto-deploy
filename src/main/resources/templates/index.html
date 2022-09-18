@@ -11,30 +11,36 @@
     </style>
 
 </head>
-<body>
 
-<h1 style="margin-left: 10px" th:text="#{i18n.autoDeploy}"></h1>
+<body style="margin: 20px">
 
+<h1 style="margin-left: 10px" th:text="#{i18n.automatedDeployment}">Automated Deployment</h1>
+
+<!-- items -->
 <div>
-    <h3 style="margin-left: 10px" th:text="#{i18n.items}"></h3>
-
+    <h3 style="margin-left: 10px" th:text="#{i18n.itemList}"></h3>
     <table id="items" style="margin-left: 30px">
         <tr>
             <td class="text-center" style="width: 60px; padding-right: 2px;" th:text="#{i18n.no}"></td>
             <td style="padding-left: 2px; padding-right: 50px;" th:text="#{i18n.item}"></td>
-            <td class="text-center" style="width: 200px" th:text="#{i18n.status}"></td>
-            <td class="text-center" style="width: 180px;" th:text="#{i18n.lastDeployTime}"></td>
+            <td class="text-center" style="width: 150px" th:text="#{i18n.stageView}"></td>
+            <td class="text-center" style="width: 180px;" th:text="#{i18n.lastDeploymentTime}"></td>
         </tr>
         <tr th:each="item:${items}"
             onmouseover="this.style.backgroundColor='#D3D3D3'"
             onmouseout="this.style.backgroundColor='#FFFFFF'">
 
+            <!-- No -->
             <td class="text-center" th:text="${itemStat.index+1}"></td>
 
+            <!-- Item -->
             <td>
                 <div>
-                    <a href="javascript:void(0);" onclick="item(this)" th:text="${item.name}"></a>
-                    <ul item-options style="position: absolute;  margin-top: 1px; background: #D3D3D3; display: none; ">
+                    <a href="javascript:void(0);"
+                       onclick="item(this)"
+                       th:name="${item.name}"
+                       th:text="${item.name}"></a>
+                    <ul item-more style="position: absolute;  margin-top: 1px; background: #D3D3D3; display: none; ">
                         <li style="list-style-type:none; margin-top: 10px;">
                             <span th:text="#{i18n.config}"></span>
                             <ul style="margin-right: 10px;">
@@ -52,52 +58,52 @@
                             <span th:text="#{i18n.options}"></span>
                             <ul style="margin-right: 10px;">
                                 <li style="list-style-type:none; margin-top: 5px;">
-                                    <a href="javascript:void(0);" th:text="#{i18n.start}"></a>
+                                    <a href="javascript:void(0);"
+                                       th:text="#{i18n.deploy}"
+                                       th:name="${item.name}"
+                                       onclick="deploy(this)"></a>
                                 </li>
                                 <li style="list-style-type:none; margin-top: 5px;">
-                                    <a href="javascript:void(0);" th:text="#{i18n.restart}"></a>
-                                </li>
-                                <li style="list-style-type:none; margin-top: 5px;">
-                                    <a href="javascript:void(0);" th:text="#{i18n.stop}"></a>
-                                </li>
-                                <li style="list-style-type:none; margin-top: 5px;">
-                                    <a href="javascript:void(0);" th:text="#{i18n.rm}"></a>
+                                    <!-- <input type="checkbox" name="enableSourceMonitoring" checked> -->
+                                    <input type="checkbox" name="enableSourceMonitoring"
+                                           onclick="enableSourceMonitoring(this)">
+                                    <span th:text="#{i18n.enableSourceMonitoring}"></span>
                                 </li>
                             </ul>
                         </li>
 
                         <li style="list-style-type:none; margin-top: 15px; margin-bottom: 10px;">
-                            <span th:text="#{i18n.logs}"></span>
-                            <ul style="margin-right: 10px; max-height: 200px; overflow:auto;">
-                                <li style="list-style-type:none; margin-top: 5px;">
-                                    <a href="javascript:void(0);">日志786979789789文件</a>
-                                </li>
-                                <li style="list-style-type:none; margin-top: 5px;">
-                                    <a href="javascript:void(0);">日志文件</a>
-                                </li>
-                                <li style="list-style-type:none; margin-top: 5px;">
-                                    <a href="javascript:void(0);">日志文7897889789件</a>
-                                </li>
-                                <li style="list-style-type:none; margin-top: 5px;">
-                                    <a href="javascript:void(0);">日志文件</a>
-                                </li>
+                            <span th:text="#{i18n.deploymentHistoryLog}"></span>
+                            <ul style="margin-right: 10px; max-height: 200px; overflow:auto;"
+                                th:id="${item.name} + '_deploymentHistoryLog'">
                             </ul>
                         </li>
                     </ul>
                 </div>
             </td>
 
-            <td class="text-center">
-                <div>
-                    <canvas width="200" height="10" style="border:1px solid #000000;" th:statuses="${item.statuses}">
-                        您的浏览器不支持 HTML5 canvas 标签。
-                    </canvas>
-                </div>
+            <!-- Stage View -->
+            <td class="text-center"
+                onmouseover="onmouseoverStage(this)"
+                onmouseout="onmouseoutStage(this)">
+                <canvas th:id="${item.name} + '_stageView'"
+                        width="150"
+                        height="10"
+                        style="border:1px solid #000000;">
+                    您的浏览器不支持 HTML5 canvas 标签。
+                </canvas>
+                <ul item-stage-view
+                    style="position: absolute;  margin-top: 1px; background: #D3D3D3; display: none; ">
+                    <li style="list-style-type:none; margin-top: 10px;">
+                        <span>此功能暂未开放!</span>
+                    </li>
+                </ul>
             </td>
 
+            <!-- Last Deployment Time -->
             <td class="text-center">
-                <div th:title="${item.lastDeployMessage}  "
-                     th:text="${#temporals.format(item.lastDeployTime,'yyyy-MM-dd HH:mm:ss')}"></div>
+                <span th:id="${item.name} + '_lastDeploymentTime'"
+                      th:text="${item.lastDeploymentTime == null ? '-' : #temporals.format(item.lastDeploymentTime,'yyyy-MM-dd HH:mm:ss')}"></span>
             </td>
         </tr>
     </table>
@@ -130,61 +136,148 @@
 <!-- utils.js -->
 <script th:src="${#request.contextPath} + '/utils.js'"></script>
 
+<!-- init -->
 <script th:inline="javascript">
 
-    // 状态映射
-    let statusInfoMap = new Map();
-    // 1-运行中(greed, #90EE90)
-    statusInfoMap.set(1, { color: '#90EE90', desc: '运行中' });
-    // 2-部署中(Pink, #FFC0CB)
-    statusInfoMap.set(2, { color: '#FFC0CB', desc: '部署中' });
-    // 3-部署完成(#87CEFA)
-    statusInfoMap.set(3, { color: '#87CEFA', desc: '部署完成' });
-    // 4-异常(red, #FF0000)
-    statusInfoMap.set(4, { color: '#FF0000', desc: '异常' });
-    // 5-结束(black, #333333)
-    statusInfoMap.set(5, { color: '#333333', desc: '结束' });
-
-    // canvas
-    Array.from($('canvas')).forEach(canvas => {
-        // ctx
-        let ctx = canvas.getContext("2d");
-
-        let divTitleBuilder = [];
-
-        // $canvas
-        $canvas = $(canvas);
-        let statuses = JSON.parse($canvas.attr('statuses'));
-        // console.log('statuses', statuses);
-        let length = statuses.length;
-        let x = 0;
-        let width = 0;
-        let widthIncr = Math.trunc(200 / length);
-        for (let i = 0; i < length; i++) {
-            let statusInfo = statusInfoMap.get(statuses[i]);
-            divTitleBuilder.push(statusInfo.desc);
-            ctx.fillStyle = statusInfo.color;
-            if (i === length - 1) {
-                width = 200 - width;
-            } else {
-                width = width + widthIncr;
-            }
-
-            // (x, y, w, h)
-            ctx.fillRect(x, 0, width, 10);
-
-            x = width;
-        }
-
-        let $div = $canvas.parent();
-        // console.log('$div', $div);
-        $div.attr('title', divTitleBuilder.join(' - '));
-    });
-
+    // UtilsModule
     let utilsModule = UtilsModule();
 
     // context-path
     const contextPath = [[${#httpServletRequest.getContextPath()}]] + '';
+
+</script>
+
+<!-- item -->
+<script>
+
+    function item(element) {
+        let $element = $(element);
+
+        // log list
+        let itemName = $element.attr('name');
+        let url = contextPath + '/item/' + itemName + "/log/list";
+        utilsModule.Utils.Http.get(url, null, function (resp) {
+            // console.log(resp);
+            let $ul = $('#' + itemName + '_deploymentHistoryLog');
+            // console.log($ul);
+            $ul.html('');
+            resp.forEach(logName => {
+                let $li = $('<li style="list-style-type:none; margin-top: 5px;"></li>');
+                let $a = $('<a target="_blank">' + logName + '</a>');
+                $a.attr('href', contextPath + '/item/' + itemName + "/log/" + logName);
+                $a.appendTo($li);
+                $li.appendTo($ul);
+            });
+
+        }, function (resp) {
+            alert(JSON.stringify(resp))
+        });
+
+        // uls
+        let $ul = $element.next();
+        // console.log('$ul', $ul);
+        let $uls = $.find('ul[item-more]');
+        // console.log('$uls', $uls);
+        $uls.forEach(_ul => _ul != $ul[0] && $(_ul).css('display', 'none'));
+
+        // cur ul
+        let display = $ul.css('display') === 'none' ? 'block' : 'none';
+        $ul.css('display', display);
+    }
+
+    function deploy(element) {
+        let itemName = $(element).attr('name');
+        let url = contextPath + '/item/' + itemName + "/deploy";
+        utilsModule.Utils.Http.post(url, null, function (resp) {
+            alert('已开始部署!');
+
+        }, function (resp) {
+            alert(JSON.stringify(resp))
+        });
+    }
+
+    function enableSourceMonitoring(element) {
+        alert('此功能暂未开放!');
+        return;
+    }
+
+</script>
+
+
+<!-- Stage View -->
+<script>
+
+    function onmouseoverStage(element) {
+        // console.log('element', element)
+        let $ul = $(element).find('ul[item-stage-view]:first');
+        // console.log('$ul', $ul);
+        $ul.css('display', 'block');
+    }
+
+    function onmouseoutStage(element) {
+        let $uls = $.find('ul[item-stage-view]');
+        // console.log('$uls', $uls);
+        $uls.forEach(_ul => $(_ul).css('display', 'none'));
+    }
+
+    /**
+     * 设置阶段进度
+     * @param itemName 项目名
+     * @param value 进度值，%
+     */
+    function setItemStage(itemName, value) {
+        let width = 150;
+        let height = 150;
+        let canvas = document.getElementById('id_canvas_' + itemName);
+
+        // cur
+        let curWidth = Math.trunc(width * value);
+        // console.log('curWidth', curWidth)
+
+        // ctx
+        let ctx = canvas.getContext("2d");
+        // fillStyle
+        ctx.fillStyle = '#90EE90';
+        // fillRect(x, y, w, h)
+        ctx.fillRect(0, 0, curWidth, height);
+
+        // diff
+        let diffWidth = width - curWidth;
+        if (diffWidth > 0) {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(curWidth, 0, diffWidth, height);
+        }
+    }
+
+    // test
+    // 每间隔2s钟循环执行
+    // setInterval(function () {
+    //     let value = Math.random();
+    //     setItemStage('test1', value);
+    //     // console.log(value);
+    // }, 2000);
+
+</script>
+
+
+<!-- WebSocket -->
+<script>
+    let webSocket = new utilsModule.Utils.WebSocket('ws://localhost:8080/item', function (event) {
+        console.log('onopen', event);
+    }, function (event) {
+        console.log('onmessage', event);
+    }, function (event) {
+        console.log('onclose', event)
+    }, function (event) {
+        console.log('error', event)
+    });
+    webSocket.connect();
+    window._webSocket = webSocket;
+
+</script>
+
+<!-- item + -->
+<script>
 
     // +
     let $tr = $('<tr></tr>');
@@ -234,22 +327,11 @@
     $('<td></td>').appendTo($tr);
     $tr.appendTo($('#items'));
 
-    function item(element) {
-        let $ul = $(element).next();
-        // console.log('$ul', $ul);
+</script>
 
-        let $uls = $.find('ul[item-options]');
-        // console.log('$uls', $uls);
-        $uls.forEach(_ul => _ul != $ul[0] && $(_ul).css('display', 'none'));
 
-        let display = null;
-        if ($ul.css('display') === 'none') {
-            display = 'block';
-        } else {
-            display = 'none';
-        }
-        $ul.css('display', display);
-    }
+<!-- Help -->
+<script>
 
     function logout() {
         let result = confirm('Logout ?');
@@ -259,6 +341,9 @@
     }
 
     function shutdown() {
+        alert('此功能暂未开放!');
+        return;
+
         let result = confirm('Shutdown ?');
         if (result) {
             window.location.href = contextPath + '/shutdown';

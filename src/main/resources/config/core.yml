@@ -32,6 +32,10 @@ source:
     # 如果设置为false, 则会在当前指定的位置处理资源；
     use-temp-workspace: true
 
+    # cron定时执行表达式
+    # 每30s执行任务
+    cron: 0/30 * * * * ?
+
   # git资源配置
   git:
     # git用户名
@@ -42,12 +46,17 @@ source:
     repo-url: https://github.com/xiangqians/auto-deploy
     # 分支名
     branch: master
-    # 资源更新检测轮询计时器, 单位s
-    poll-timer: 30
+
+    # hook,cron，二选一
+    # 钩子（目前暂不支持）
+    #hook: null
+    # cron定时执行表达式
+    # 每30s执行任务
+    cron: 0/30 * * * * ?
 
 
 # 构建命令配置
-build-cmd:
+build:
   # 构建命令根路径
   root: E:\build-tools\apache-maven-3.6.0\bin
 
@@ -77,9 +86,6 @@ deployment:
     # 附加文件或目录集
     addl-files: [ ]
 
-  # 为了兼容微服务
-  jars: []
-
   # jar部署, java -jar xxx.jar
   jar:
     # java家目录
@@ -92,9 +98,6 @@ deployment:
       - ./test
       # 绝对路径的附加文件或目录
       - /opt/auto-deploy/config
-
-  # 为了兼容微服务
-  jar-dockers: [ ]
 
   # jar docker部署
   jar-docker:

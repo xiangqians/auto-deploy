@@ -207,5 +207,95 @@ function UtilsModule() {
 
     }
 
+
+    /**
+     * WebSocket
+     */
+    obj.Utils.WebSocket = function (url, onopen, onmessage, onclose, error) {
+        this.url = url;
+        this.webSocket = null;
+        this.onopen = onopen;
+        this.onmessage = onmessage;
+        this.onclose = onclose;
+        this.error = error;
+    }
+
+    obj.Utils.WebSocket.prototype.connect = function () {
+        const self = this;
+        if (self.webSocket != null) {
+            return;
+        }
+
+        if (!window.WebSocket) {
+            window.WebSocket = window.MozWebSocket;
+        }
+
+        // 判断当前浏览器是否支持WebSocket
+        if (!(window.WebSocket)) { // or 'WebSocket' in window;
+            alert("Your browser does not support Web Socket.");
+            return;
+        }
+
+        self.webSocket = new WebSocket(self.url);
+
+        // 连接成功建立的回调方法
+        self.webSocket.onopen = function (event) {
+            if (self.onopen) {
+                self.onopen(event);
+            }
+        };
+
+        // 接收到消息的回调方法
+        self.webSocket.onmessage = function (event) {
+            if (self.onmessage) {
+                self.onmessage(event);
+            }
+        };
+
+        // 连接关闭的回调方法
+        self.webSocket.onclose = function (event) {
+            if (self.onclose) {
+                self.onclose(event);
+            }
+        };
+
+        // 连接发生错误的回调方法
+        self.webSocket.onerror = function (event) {
+            if (self.error) {
+                self.error(event);
+            }
+        };
+    };
+
+    // send
+    obj.Utils.WebSocket.prototype.send = function (message) {
+        const self = this;
+        if (self.webSocket == null) {
+            alert("No connection established");
+            return;
+        }
+        self.webSocket.send(message);
+        return true;
+    };
+
+    // close
+    obj.Utils.WebSocket.prototype.close = function () {
+        const self = this;
+        if (self.webSocket != null) {
+            self.webSocket.close();
+            self.webSocket = null;
+            return true;
+        }
+        return false;
+    };
+
+    // 监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
+    obj.Utils.WebSocket.prototype.windowOnbeforeunload = function () {
+        const self = this;
+        window.onbeforeunload = function () {
+            self.close();
+        }
+    }
+
     return obj;
 }

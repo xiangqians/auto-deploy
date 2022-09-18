@@ -18,8 +18,8 @@
     <conversionRule conversionWord="wEx"
                     converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
 
-    <!-- custom -->
-    <appender name="CUSTOM" class="org.auto.deploy.logback.CustomAppender">
+    <!-- log -->
+    <appender name="LOG" class="org.auto.deploy.logback.LogAppender">
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
@@ -137,7 +137,7 @@
     </logger>
 
     <root level="DEBUG">
-        <appender-ref ref="CUSTOM"/>
+        <appender-ref ref="LOG"/>
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="DEBUG_FILE"/>
         <appender-ref ref="INFO_FILE"/>

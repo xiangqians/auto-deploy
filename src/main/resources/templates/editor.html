@@ -14,7 +14,7 @@
     <link rel="stylesheet" th:href="${#request.contextPath} + '/codemirror-5.65.8/lib/codemirror.css'">
 
 </head>
-<body>
+<body style="margin: 20px">
 
 <textarea id=code th:text="${content}"></textarea>
 <button onclick="submit()">Submit</button>
@@ -50,7 +50,7 @@
     });
 
     // setSize(width, height)
-    editor.setSize(null, 600);
+    editor.setSize(null, 800);
 
     function submit() {
         let value = editor.getValue();
@@ -58,6 +58,7 @@
         let url = contextPath + [[${path}]];
         utilsModule.Utils.Http.post(url, value, function (resp) {
             // console.log(resp);
+            alert("Success")
             location.reload(false);
 
         }, function (resp) {
