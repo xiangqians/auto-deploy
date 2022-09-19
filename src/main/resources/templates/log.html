@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title th:text="${title}"></title>
+
+    <style>
+        body {
+            white-space: pre;
+        }
+    </style>
 </head>
 <body style="margin: 20px"
       th:utext="${#strings.unescapeJava(#strings.replace(#strings.escapeJava(content),'\n','&lt;br/&gt;'))}">

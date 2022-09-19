@@ -1,4 +1,4 @@
-package org.auto.deploy.item.deployment.stc;
+package org.auto.deploy.core.deployment.stc;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -7,9 +7,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.auto.deploy.item.deployment.AbstractDeployment;
-import org.auto.deploy.item.server.ItemServer;
-import org.auto.deploy.item.source.ItemSource;
+import org.auto.deploy.core.deployment.AbstractDeployment;
+import org.auto.deploy.core.server.Server;
+import org.auto.deploy.core.source.Source;
 import org.auto.deploy.util.Assert;
 
 import java.io.File;
@@ -23,10 +23,10 @@ import java.util.function.Consumer;
  * @date 23:54 2022/09/10
  */
 @Slf4j
-public class ItemStaticDeployment extends AbstractDeployment {
+public class StaticDeployment extends AbstractDeployment {
 
     private Config config;
-    private ItemSource source;
+    private Source source;
 
     // 部署位置绝对路径
     private String absoluteLocation;
@@ -43,7 +43,7 @@ public class ItemStaticDeployment extends AbstractDeployment {
     // files
     private File[] files;
 
-    public ItemStaticDeployment(Config config, ItemServer server, ItemSource source) {
+    public StaticDeployment(Config config, Server server, Source source) {
         super(server);
         this.config = config;
         this.source = source;

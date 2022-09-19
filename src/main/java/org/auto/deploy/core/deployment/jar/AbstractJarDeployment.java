@@ -1,9 +1,9 @@
-package org.auto.deploy.item.deployment.jar;
+package org.auto.deploy.core.deployment.jar;
 
 import lombok.extern.slf4j.Slf4j;
-import org.auto.deploy.item.server.ItemServer;
-import org.auto.deploy.item.deployment.AbstractDeployment;
-import org.auto.deploy.item.source.ItemSource;
+import org.auto.deploy.core.server.Server;
+import org.auto.deploy.core.deployment.AbstractDeployment;
+import org.auto.deploy.core.source.Source;
 
 import java.io.File;
 
@@ -14,7 +14,7 @@ import java.io.File;
 @Slf4j
 public class AbstractJarDeployment extends AbstractDeployment {
 
-    protected ItemSource source;
+    protected Source source;
 
     // jar file
     private File pkgFile;
@@ -28,7 +28,7 @@ public class AbstractJarDeployment extends AbstractDeployment {
     // files
     private File[] files;
 
-    public AbstractJarDeployment(ItemServer server, ItemSource source) {
+    public AbstractJarDeployment(Server server, Source source) {
         super(server);
         this.source = source;
     }

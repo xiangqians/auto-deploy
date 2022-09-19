@@ -1,4 +1,4 @@
-package org.auto.deploy.item.server;
+package org.auto.deploy.core.server;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -35,7 +35,7 @@ import java.util.function.Consumer;
  * @date 13:06 2022/09/10
  */
 @Slf4j
-public class ItemServer implements Closeable {
+public class Server implements Closeable {
 
     private Config config;
     private Ssh ssh;
@@ -51,7 +51,7 @@ public class ItemServer implements Closeable {
             "-bash:"
     );
 
-    public ItemServer(Config config) {
+    public Server(Config config) {
         this.config = config;
     }
 
@@ -224,16 +224,19 @@ public class ItemServer implements Closeable {
         @JsonProperty("work-dir")
         private String workDir;
 
+        /**
+         * sudo
+         */
         private Boolean sudo;
 
         public void validate() {
-            Assert.notNull(host, "host不能为null");
-            Assert.notNull(port, "port不能为null");
-            Assert.notNull(username, "username不能为null");
-            Assert.notNull(password, "password不能为null");
-            Assert.isTrue(Objects.nonNull(sessionConnTimeout) && sessionConnTimeout > 0, "session-conn-timeout必须大于0");
-            Assert.isTrue(Objects.nonNull(channelConnTimeout) && channelConnTimeout > 0, "channel-conn-timeout必须大于0");
-            Assert.notNull(workDir, "work-dir不能为null");
+            Assert.notNull(host, "server.host不能为null");
+            Assert.notNull(port, "server.port不能为null");
+            Assert.notNull(username, "server.username不能为null");
+            Assert.notNull(password, "server.password不能为null");
+            Assert.isTrue(Objects.nonNull(sessionConnTimeout) && sessionConnTimeout > 0, "server.session-conn-timeout必须大于0");
+            Assert.isTrue(Objects.nonNull(channelConnTimeout) && channelConnTimeout > 0, "server.channel-conn-timeout必须大于0");
+            Assert.notNull(workDir, "server.work-dir不能为null");
         }
 
     }

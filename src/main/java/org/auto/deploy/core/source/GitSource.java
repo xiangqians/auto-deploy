@@ -1,4 +1,4 @@
-package org.auto.deploy.item.source;
+package org.auto.deploy.core.source;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -7,6 +7,9 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.auto.deploy.core.ItemDeployer;
+import org.auto.deploy.core.ItemService;
+import org.auto.deploy.item.ItemInfo;
 import org.auto.deploy.util.Assert;
 import org.auto.deploy.util.DateUtils;
 import org.eclipse.jgit.api.Git;
@@ -32,7 +35,7 @@ import java.util.UUID;
  * @date 01:29 2022/09/10
  */
 @Slf4j
-public class ItemGitSource implements ItemSource {
+public class GitSource implements Source {
 
     private Config config;
 
@@ -45,9 +48,14 @@ public class ItemGitSource implements ItemSource {
     @Setter
     private volatile boolean listenFlag;
 
-    public ItemGitSource(Config config) {
+    public GitSource(Config config) {
         this.config = config;
         this.listenFlag = true;
+    }
+
+    @Override
+    public boolean isChanged() {
+        return false;
     }
 
     @Override
@@ -73,6 +81,21 @@ public class ItemGitSource implements ItemSource {
                 .setBranch(config.getBranch())
                 .setDirectory(tempFile)
                 .call();
+
+
+        RevCommit lastRevCommit = lastRevCommit();
+        print(lastRevCommit);
+        // 先临时这么写
+        ItemDeployer itemDeployer = (ItemDeployer) Thread.currentThread();
+        ItemInfo itemInfo = ItemService.getItemInfo(itemDeployer.getItemName());
+        StringBuilder lastRevCommitBuilder = new StringBuilder();
+        lastRevCommitBuilder.append("最新一次提交信息: ").append(lastRevCommit.getId());
+        lastRevCommitBuilder.append("\n\t").append("提交时间: ").append("\t").append(DateUtils.format(DateUtils.timestampToLocalDateTime(lastRevCommit.getCommitTime() * 1000L)));
+        lastRevCommitBuilder.append("\n\t").append("提交者标识: ").append("\t").append(lastRevCommit.getCommitterIdent());
+        lastRevCommitBuilder.append("\n\t").append("作者身份: ").append("\t").append(lastRevCommit.getAuthorIdent());
+        lastRevCommitBuilder.append("\n\t").append("提交信息: ").append("\t").append(lastRevCommit.getFullMessage());
+        itemInfo.setLastRevCommit(lastRevCommitBuilder.toString());
+        ItemService.writeItemInfo(itemDeployer.getItemName(), itemInfo);
 
         log.debug("已从git上clone代码到本地!\n\t{}", tempFile.getAbsolutePath());
         return tempFile;
@@ -105,30 +128,56 @@ public class ItemGitSource implements ItemSource {
                 }
                 return false;
             }
-
-            log.debug("最新一次提交信息: {}" +
-                            "\n\t提交时间:\t{}" +
-                            "\n\t提交者标识:\t{}" +
-                            "\n\t作者身份:\t{}" +
-                            "\n\t提交信息:\t{}",
-                    revCommit.getId(),
-                    DateUtils.format(DateUtils.timestampToLocalDateTime(revCommit.getCommitTime() * 1000L)),
-                    revCommit.getCommitterIdent(),
-                    revCommit.getAuthorIdent(),
-                    revCommit.getFullMessage());
+            print(revCommit);
             commitId = revCommit.getName();
             return true;
         }
         return false;
     }
 
+    private void print(RevCommit revCommit) {
+        log.debug("最新一次提交信息: {}" +
+                        "\n\t提交时间:\t{}" +
+                        "\n\t提交者标识:\t{}" +
+                        "\n\t作者身份:\t{}" +
+                        "\n\t提交信息:\t{}",
+                revCommit.getId(),
+                DateUtils.format(DateUtils.timestampToLocalDateTime(revCommit.getCommitTime() * 1000L)),
+                revCommit.getCommitterIdent(),
+                revCommit.getAuthorIdent(),
+                revCommit.getFullMessage());
+    }
+
     /**
-     * 下一版本支持 GitHook
+     * 最近一次提交信息
      *
-     * @param notice
-     * @throws Exception
+     * @return
      */
-    public synchronized void listen(Notice notice) throws Exception {
+    private RevCommit lastRevCommit() throws IOException {
+        Repository localRepo = git.getRepository();
+
+        // log
+        RevWalk revWalk = new RevWalk(localRepo);
+        for (Ref ref : localRepo.getAllRefs().values()) {
+            revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
+        }
+        Iterator<RevCommit> iterator = revWalk.iterator();
+        if (iterator.hasNext()) {
+            RevCommit revCommit = iterator.next();
+            return revCommit;
+        }
+
+        return null;
+    }
+
+
+//    /**
+//     * 下一版本支持 GitHook
+//     *
+//     * @param notice
+//     * @throws Exception
+//     */
+//    public synchronized void listen(Notice notice) throws Exception {
 //        if (config.getPollTimer() == 0) {
 //            notice.on();
 //            return;
@@ -148,11 +197,11 @@ public class ItemGitSource implements ItemSource {
 //                notice.on();
 //            }
 //        }
-    }
-
-    public static interface Notice {
-        void on() throws Exception;
-    }
+////    }
+//
+//    public static interface Notice {
+//        void on() throws Exception;
+//    }
 
     @Override
     public void close() throws IOException {

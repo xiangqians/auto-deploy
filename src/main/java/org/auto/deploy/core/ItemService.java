@@ -1,10 +1,11 @@
-package org.auto.deploy.item;
+package org.auto.deploy.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.auto.deploy.item.ItemInfo;
 import org.auto.deploy.util.JacksonUtils;
 import org.springframework.util.Assert;
 import org.yaml.snakeyaml.Yaml;
@@ -59,14 +60,19 @@ public class ItemService {
 
         itemDeployer = new ItemDeployer(itemName);
         itemDeployer.start();
+        ITEM_DEPLOYER_MAP.put(itemName, itemDeployer);
         return true;
     }
 
-    public static ItemConfig getItemConfig(String itemName) throws IOException {
+    public static ItemDeployer getItemDeployer(String itemName) {
+        return ITEM_DEPLOYER_MAP.get(itemName);
+    }
+
+    public static Config getItemConfig(String itemName) throws IOException {
         InputStream input = null;
         try {
             Yaml yaml = new Yaml();
-            return JacksonUtils.toObject(yaml.loadAs(getFileContent(itemName, "config", "core.yml"), Map.class), ItemConfig.class);
+            return JacksonUtils.toObject(yaml.loadAs(getFileContent(itemName, "config", "core.yml"), Map.class), Config.class);
         } finally {
             IOUtils.closeQuietly(input);
         }
@@ -91,10 +97,13 @@ public class ItemService {
             return Collections.emptyList();
         }
 
-        return Optional.ofNullable(logDir.listFiles(File::isFile))
+        List<String> list = Optional.ofNullable(logDir.listFiles(File::isFile))
                 .filter(ArrayUtils::isNotEmpty)
                 .map(files -> Arrays.stream(files).map(File::getName).collect(Collectors.toList()))
                 .orElse(Collections.emptyList());
+
+        list.sort((o1, o2) -> -o1.compareTo(o2));
+        return list;
     }
 
     public static synchronized Boolean add(String itemName) throws IOException {
@@ -145,6 +154,14 @@ public class ItemService {
             File infoFile = getInfoFile(itemName);
             Assert.isTrue(infoFile.exists(), String.format("FileNotFoundException: %s", infoFile.getPath()));
             return JacksonUtils.toObject(FileUtils.readFileToString(infoFile, StandardCharsets.UTF_8), ItemInfo.class);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void writeItemInfo(String itemName, ItemInfo itemInfo) {
+        try {
+            FileUtils.write(getInfoFile(itemName), JacksonUtils.toJson(itemInfo), StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -1,11 +1,11 @@
-package org.auto.deploy.item.deployment;
+package org.auto.deploy.core.deployment;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.auto.deploy.item.server.ItemServer;
+import org.auto.deploy.core.server.Server;
 import org.auto.deploy.util.*;
 
 import java.io.*;
@@ -21,9 +21,9 @@ import java.util.function.Function;
  * @date 16:32 2022/09/10
  */
 @Slf4j
-public abstract class AbstractDeployment implements ItemDeployment {
+public abstract class AbstractDeployment implements Deployment {
 
-    protected ItemServer server;
+    protected Server server;
 
     // .tar.gz
     private File tempTarGzFile;
@@ -31,7 +31,7 @@ public abstract class AbstractDeployment implements ItemDeployment {
     // temp dir
     private File tempDir;
 
-    public AbstractDeployment(ItemServer server) {
+    public AbstractDeployment(Server server) {
         this.server = server;
     }
 
@@ -150,6 +150,7 @@ public abstract class AbstractDeployment implements ItemDeployment {
         StringBuilder content = new StringBuilder();
         BufferedReader br = null;
         try {
+            // org.apache.commons.io.IOUtils.toString(java.net.URL, java.nio.charset.Charset)
             if ("file".equals(url.getProtocol())) {
                 br = new BufferedReader(new FileReader(url.getFile()));
             } else if ("jar".equals(url.getProtocol())) {
@@ -233,7 +234,7 @@ public abstract class AbstractDeployment implements ItemDeployment {
      * @return
      */
     protected URL getScriptResource(String name) {
-        name = String.format("script/%s", name);
+        name = String.format("config/%s", name);
         URL url = Thread.currentThread().getContextClassLoader().getResource(name);
         Assert.notNull(url, String.format("未找到 %s 脚本文件!", name));
         return url;

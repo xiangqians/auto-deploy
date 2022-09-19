@@ -1,15 +1,14 @@
-package org.auto.deploy.item;
+package org.auto.deploy.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.auto.deploy.core.ItemService;
+import org.auto.deploy.item.ItemInfo;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -31,16 +30,19 @@ public class ItemController {
         return "log";
     }
 
+    @ResponseBody
     @GetMapping("/item/{itemName}/log/list")
     public ResponseEntity<List<String>> logList(@PathVariable("itemName") String itemName) throws Exception {
         return new ResponseEntity<>(ItemService.getLogList(itemName), HttpStatus.OK);
     }
 
+    @ResponseBody
     @PostMapping("/item/{itemName}/deploy")
     public ResponseEntity<Boolean> deploy(@PathVariable("itemName") String itemName) throws Exception {
         return new ResponseEntity<>(ItemService.deploy(itemName), HttpStatus.OK);
     }
 
+    @ResponseBody
     @PostMapping("/item/{itemName}/config/jar/docker/{fileName}")
     public ResponseEntity<Boolean> modifyConfigFileContentForJarDockerXxx(@PathVariable("itemName") String itemName,
                                                                           @PathVariable("fileName") String fileName,
@@ -55,6 +57,7 @@ public class ItemController {
         return getConfigFileContent(itemName, new String[]{"jar", "docker", fileName}, "shell", model);
     }
 
+    @ResponseBody
     @PostMapping("/item/{itemName}/config/{fileName}")
     public ResponseEntity<Boolean> modifyConfigFileContentForXxx(@PathVariable("itemName") String itemName,
                                                                  @PathVariable("fileName") String fileName,
@@ -80,6 +83,7 @@ public class ItemController {
         return "editor";
     }
 
+    @ResponseBody
     @PostMapping("/item/add/{name}")
     public ResponseEntity<Boolean> add(@PathVariable("name") String name) throws Exception {
         return new ResponseEntity<>(ItemService.add(name), HttpStatus.OK);

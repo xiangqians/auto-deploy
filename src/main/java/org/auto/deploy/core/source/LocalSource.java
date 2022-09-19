@@ -1,4 +1,4 @@
-package org.auto.deploy.item.source;
+package org.auto.deploy.core.source;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,17 +22,22 @@ import java.util.UUID;
  * @date 23:07 2022/09/09
  */
 @Slf4j
-public class ItemLocalSource implements ItemSource {
+public class LocalSource implements Source {
 
     private Config config;
     private File file;
     private volatile File tempFile;
 
-    public ItemLocalSource(Config config) {
+    public LocalSource(Config config) {
         this.config = config;
         this.file = new File(config.getLocation());
         Assert.isTrue(file.exists(), String.format("本地资源位置不存在: %s", config.getLocation()));
         Assert.isTrue(file.isDirectory(), String.format("本地资源必须是目录类型: %s", config.getLocation()));
+    }
+
+    @Override
+    public boolean isChanged() {
+        return false;
     }
 
     @Override

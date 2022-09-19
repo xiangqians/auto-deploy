@@ -8,6 +8,8 @@ import ch.qos.logback.core.status.ErrorStatus;
 import lombok.Data;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.auto.deploy.core.ItemDeployer;
+import org.auto.deploy.core.ItemService;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -38,16 +40,11 @@ public class LogAppender<E> extends UnsynchronizedAppenderBase<E> {
         }
     }
 
-
     @Override
     protected void append(E eventObject) {
         if (Objects.isNull(eventObject)
                 || !isStarted()
                 || !(eventObject instanceof ILoggingEvent)) {
-            return;
-        }
-
-        if (1 == 1) {
             return;
         }
 
@@ -58,15 +55,15 @@ public class LogAppender<E> extends UnsynchronizedAppenderBase<E> {
 
             ILoggingEvent iLoggingEvent = (ILoggingEvent) eventObject;
             String threadName = iLoggingEvent.getThreadName();
-            // item_/wekrtseghuonverrthunv/2022-09-12
-
-            byte[] bytes = encoder.encode(eventObject);
-            if (ArrayUtils.isNotEmpty(bytes)) {
-                synchronized (this) {
-//                    System.err.println(eventObject + ">>>>>>>>>" + new String(bytes, StandardCharsets.UTF_8));
-                    FileUtils.write(new File(String.format("items/%s.log", threadName)),
-                            new String(bytes, StandardCharsets.UTF_8),
-                            StandardCharsets.UTF_8, true);
+            ItemDeployer itemDeployer = ItemService.getItemDeployer(threadName);
+            if (Objects.nonNull(itemDeployer) && Objects.nonNull(itemDeployer.getLogPathName())) {
+                byte[] bytes = encoder.encode(eventObject);
+                if (ArrayUtils.isNotEmpty(bytes)) {
+                    synchronized (LogAppender.class) {
+                        FileUtils.write(new File(itemDeployer.getLogPathName()),
+                                new String(bytes, StandardCharsets.UTF_8),
+                                StandardCharsets.UTF_8, true);
+                    }
                 }
             }
 

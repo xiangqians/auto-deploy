@@ -1,6 +1,7 @@
-package org.auto.deploy.item.source;
+package org.auto.deploy.core.deployment;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -8,59 +9,63 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 import lombok.Getter;
+import org.auto.deploy.core.deployment.jar.JarDeployment;
+import org.auto.deploy.core.deployment.jar.docker.JarDockerDeployment;
+import org.auto.deploy.core.deployment.stc.StaticDeployment;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
 /**
- * 资源
+ * 部署
  *
  * @author xiangqian
- * @date 01:30 2022/09/10
+ * @date 12:41 2022/09/10
  */
-public interface ItemSource extends Closeable {
+public interface Deployment extends Closeable {
 
-    /**
-     * 获取资源
-     *
-     * @return
-     * @throws Exception
-     */
-    File get() throws Exception;
-
+    void deploy() throws Exception;
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     class Config {
 
         /**
-         * 资源类型, 可选值: [ local, git ]
+         * 部署类型, 可选值: [ static, jar, jar-docker ]
          */
         @JsonDeserialize(using = TypeJsonDeserializer.class)
         private Type type;
 
-        private ItemLocalSource.Config local;
-        private ItemGitSource.Config git;
+        @JsonProperty("static")
+        private StaticDeployment.Config stc;
+
+        private JarDeployment.Config jar;
+
+        @JsonProperty("jar-docker")
+        private JarDockerDeployment.Config jarDocker;
 
         public void validate() {
             switch (type) {
-                case LOCAL:
-                    local.validate();
+                case STATIC:
+                    stc.validate();
                     break;
-                case GIT:
-                    git.validate();
+                case JAR:
+                    jar.validate();
+                    break;
+                case JAR_DOCKER:
+                    jarDocker.validate();
                     break;
             }
         }
 
         @Override
         public String toString() {
-            StringBuilder builder = new StringBuilder("SourceConfig {").append('\n');
+            StringBuilder builder = new StringBuilder("DeploymentConfig {").append('\n');
             builder.append('\t').append('\t').append(type).append('\n');
-            builder.append('\t').append('\t').append(local).append('\n');
-            builder.append('\t').append('\t').append(git).append('\n');
+            builder.append('\t').append('\t').append(stc).append('\n');
+            builder.append('\t').append('\t').append(jar).append('\n');
+            builder.append('\t').append('\t').append(jarDocker).append('\n');
             builder.append('\t').append('}');
             return builder.toString();
         }
@@ -80,8 +85,9 @@ public interface ItemSource extends Closeable {
 
         @Getter
         public static enum Type {
-            LOCAL("local"),
-            GIT("git"),
+            STATIC("static"),
+            JAR("jar"),
+            JAR_DOCKER("jar-docker"),
             ;
             private final String value;
 
@@ -91,7 +97,7 @@ public interface ItemSource extends Closeable {
 
             public static Type of(String value) {
                 if (Objects.isNull(value)) {
-                    throw new IllegalArgumentException("必须指定资源类型(source.type), 可选值: [ local, git ]");
+                    throw new IllegalArgumentException("必须指定部署类型(deployment.type), 可选值: [ static, jar, jar-docker ]");
                 }
 
                 for (Type type : Type.values()) {
@@ -99,7 +105,7 @@ public interface ItemSource extends Closeable {
                         return type;
                     }
                 }
-                throw new IllegalArgumentException(String.format("目前不支持 %s 资源类型(source.type), 可选值: [ local, git ]", value));
+                throw new IllegalArgumentException(String.format("目前不支持 %s 部署类型(deployment.type), 可选值: [ static, jar, jar-docker ]", value));
             }
 
         }

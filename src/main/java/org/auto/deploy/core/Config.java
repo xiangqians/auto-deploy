@@ -1,12 +1,12 @@
-package org.auto.deploy.item;
+package org.auto.deploy.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.auto.deploy.item.build.ItemBuild;
-import org.auto.deploy.item.deployment.ItemDeployment;
-import org.auto.deploy.item.server.ItemServer;
-import org.auto.deploy.item.source.ItemSource;
+import org.auto.deploy.core.build.Build;
+import org.auto.deploy.core.deployment.Deployment;
+import org.auto.deploy.core.server.Server;
+import org.auto.deploy.core.source.Source;
 
 /**
  * @author xiangqian
@@ -15,14 +15,14 @@ import org.auto.deploy.item.source.ItemSource;
 @Slf4j
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true) // 忽略不存在字段
-public class ItemConfig {
+public class Config {
 
-    private String itemName;
+    private String md5;
 
-    private ItemServer.Config server;
-    private ItemSource.Config source;
-    private ItemBuild.Config build;
-    private ItemDeployment.Config deployment;
+    private Server.Config server;
+    private Source.Config source;
+    private Build.Config build;
+    private Deployment.Config deployment;
 
     public void validate() {
         server.validate();

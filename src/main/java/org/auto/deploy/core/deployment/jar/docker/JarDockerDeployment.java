@@ -1,14 +1,17 @@
-package org.auto.deploy.item.deployment.jar.docker;
+package org.auto.deploy.core.deployment.jar.docker;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.auto.deploy.item.deployment.jar.ItemJarDeployment;
-import org.auto.deploy.item.server.ItemServer;
-import org.auto.deploy.item.source.ItemSource;
+import org.auto.deploy.core.ItemDeployer;
+import org.auto.deploy.core.ItemService;
+import org.auto.deploy.core.deployment.jar.JarDeployment;
+import org.auto.deploy.core.server.Server;
+import org.auto.deploy.core.source.Source;
 import org.auto.deploy.util.Assert;
 
 import java.io.File;
@@ -36,14 +39,14 @@ import java.util.regex.Pattern;
  * @date 20:25 2022/09/10
  */
 @Slf4j
-public class ItemJarDockerDeployment extends ItemJarDeployment {
+public class JarDockerDeployment extends JarDeployment {
 
     // --name
     private String name;
     // --tag, -t
     private String tag;
 
-    public ItemJarDockerDeployment(Config config, ItemServer server, ItemSource source) {
+    public JarDockerDeployment(Config config, Server server, Source source) {
         super(config, server, source);
     }
 
@@ -83,7 +86,8 @@ public class ItemJarDockerDeployment extends ItemJarDeployment {
     @Override
     protected void initScriptFiles() throws Exception {
         // script files
-        URL[] scriptUrls = new URL[]{getScriptResource("jar/docker/Dockerfile"),
+        File dockerfile = ItemService.getFile((((ItemDeployer) Thread.currentThread()).getItemName()), "config/jar/docker/Dockerfile");
+        URL[] scriptUrls = new URL[]{FileUtils.toURLs(dockerfile)[0],
                 getScriptResource("jar/docker/clean.sh")};
 
         // placeholderMap
@@ -125,7 +129,7 @@ public class ItemJarDockerDeployment extends ItemJarDeployment {
     @Data
     @ToString(callSuper = true)
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Config extends ItemJarDeployment.Config {
+    public static class Config extends JarDeployment.Config {
 
         /**
          * 执行docker超时时间s

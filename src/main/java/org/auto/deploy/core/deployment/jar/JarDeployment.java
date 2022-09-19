@@ -1,4 +1,4 @@
-package org.auto.deploy.item.deployment.jar;
+package org.auto.deploy.core.deployment.jar;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -6,9 +6,9 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.auto.deploy.item.deployment.AbstractDeployment;
-import org.auto.deploy.item.server.ItemServer;
-import org.auto.deploy.item.source.ItemSource;
+import org.auto.deploy.core.deployment.AbstractDeployment;
+import org.auto.deploy.core.server.Server;
+import org.auto.deploy.core.source.Source;
 import org.auto.deploy.util.Assert;
 
 import java.io.File;
@@ -21,10 +21,10 @@ import java.util.*;
  * @date 14:44 2022/09/10
  */
 @Slf4j
-public class ItemJarDeployment extends AbstractDeployment {
+public class JarDeployment extends AbstractDeployment {
 
     protected Config config;
-    protected ItemSource source;
+    protected Source source;
 
     // jar file
     protected File pkgFile;
@@ -38,7 +38,7 @@ public class ItemJarDeployment extends AbstractDeployment {
     // files
     protected File[] files;
 
-    public ItemJarDeployment(Config config, ItemServer server, ItemSource source) {
+    public JarDeployment(Config config, Server server, Source source) {
         super(server);
         this.config = config;
         this.source = source;

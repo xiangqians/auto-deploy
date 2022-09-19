@@ -102,8 +102,10 @@
 
             <!-- Last Deployment Time -->
             <td class="text-center">
+                <div th:title="${item.lastRevCommit}">
                 <span th:id="${item.name} + '_lastDeploymentTime'"
                       th:text="${item.lastDeploymentTime == null ? '-' : #temporals.format(item.lastDeploymentTime,'yyyy-MM-dd HH:mm:ss')}"></span>
+                </div>
             </td>
         </tr>
     </table>
@@ -262,18 +264,17 @@
 
 <!-- WebSocket -->
 <script>
-    let webSocket = new utilsModule.Utils.WebSocket('ws://localhost:8080/item', function (event) {
-        console.log('onopen', event);
-    }, function (event) {
-        console.log('onmessage', event);
-    }, function (event) {
-        console.log('onclose', event)
-    }, function (event) {
-        console.log('error', event)
-    });
-    webSocket.connect();
-    window._webSocket = webSocket;
-
+    // let webSocket = new utilsModule.Utils.WebSocket('ws://localhost:8080/item', function (event) {
+    //     console.log('onopen', event);
+    // }, function (event) {
+    //     console.log('onmessage', event);
+    // }, function (event) {
+    //     console.log('onclose', event)
+    // }, function (event) {
+    //     console.log('error', event)
+    // });
+    // webSocket.connect();
+    // window._webSocket = webSocket;
 </script>
 
 <!-- item + -->
