@@ -11,7 +11,7 @@
     -->
 
     <!-- 引入核心文件 codemirror.css -->
-    <link rel="stylesheet" th:href="${#request.contextPath} + '/codemirror-5.65.8/lib/codemirror.css'">
+    <link rel="stylesheet" th:href="${#request.contextPath} + '/static/codemirror-5.65.8/lib/codemirror.css'">
 
 </head>
 <body style="margin: 20px">
@@ -23,17 +23,17 @@
 </html>
 
 <!-- jquery.js -->
-<script th:src="${#request.contextPath} + '/jquery-3.6.0/main.min.js'"></script>
+<script th:src="${#request.contextPath} + '/static/jquery-3.6.0/main.min.js'"></script>
 
 <!-- utils.js -->
-<script th:src="${#request.contextPath} + '/utils.js'"></script>
+<script th:src="${#request.contextPath} + '/static/utils.js'"></script>
 
 <!-- 引入核心文件 codemirror.js -->
-<script th:src="${#request.contextPath} + '/codemirror-5.65.8/lib/codemirror.js'"></script>
+<script th:src="${#request.contextPath} + '/static/codemirror-5.65.8/lib/codemirror.js'"></script>
 
 <!-- 引入代码高亮js -->
-<script th:src="${#request.contextPath} + '/codemirror-5.65.8/mode/yaml/yaml.js'"></script>
-<script th:src="${#request.contextPath} + '/codemirror-5.65.8/mode/shell/shell.js'"></script>
+<script th:src="${#request.contextPath} + '/static/codemirror-5.65.8/mode/yaml/yaml.js'"></script>
+<script th:src="${#request.contextPath} + '/static/codemirror-5.65.8/mode/shell/shell.js'"></script>
 
 <script th:inline="javascript">
 

@@ -8,9 +8,29 @@
         body {
             white-space: pre;
         }
+
+        .float {
+            position: fixed;
+            bottom: 100px;
+            right: 10px;
+            width: 80px;
+            height: 100px;
+            background: #D3D3D3;
+        }
+
     </style>
 </head>
+
+<span id="top"></span>
+
+<div class="float">
+    <a href="#top" th:text="#{i18n.top}"></a><br>
+    <a href="#bottom" th:text="#{i18n.bottom}"></a>
+</div>
+
 <body style="margin: 20px"
       th:utext="${#strings.unescapeJava(#strings.replace(#strings.escapeJava(content),'\n','&lt;br/&gt;'))}">
 </body>
+<span id="bottom"></span>
+
 </html>

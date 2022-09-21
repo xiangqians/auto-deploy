@@ -133,10 +133,10 @@
 </html>
 
 <!-- jquery.js -->
-<script th:src="${#request.contextPath} + '/jquery-3.6.0/main.min.js'"></script>
+<script th:src="${#request.contextPath} + '/static/jquery-3.6.0/main.min.js'"></script>
 
 <!-- utils.js -->
-<script th:src="${#request.contextPath} + '/utils.js'"></script>
+<script th:src="${#request.contextPath} + '/static/utils.js'"></script>
 
 <!-- init -->
 <script th:inline="javascript">
@@ -189,6 +189,12 @@
 
     function deploy(element) {
         let itemName = $(element).attr('name');
+
+        let result = confirm('deploy ' + itemName + ' ?');
+        if (!(result)) {
+            return;
+        }
+
         let url = contextPath + '/item/' + itemName + "/deploy";
         utilsModule.Utils.Http.post(url, null, function (resp) {
             alert('已开始部署!');

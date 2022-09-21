@@ -17,10 +17,7 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(WebSecurity web) throws Exception {
         // 静态资源放行
-        web.ignoring().antMatchers("/codemirror-5.65.8/**",
-                "jquery-3.6.0/**",
-                "md5-2.16.0/**",
-                "custom/**");
+//        web.ignoring().antMatchers("/static/**");
     }
 
     @Override
@@ -28,7 +25,11 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
         // Refused to display 'http://localhost:8080/' in a frame because it set 'X-Frame-Options' to 'deny'.
         http.headers().frameOptions().sameOrigin();
 
+        //关闭跨域限制
         http.csrf().disable();
+
+        // 静态资源放行
+        http.authorizeRequests().antMatchers("/static/**").permitAll();
 
         super.configure(http);
     }
