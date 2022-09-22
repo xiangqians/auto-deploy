@@ -5,9 +5,11 @@
     <title>Index</title>
 
     <style>
+
         .text-center {
             text-align: center;
         }
+
     </style>
 
 </head>
@@ -86,26 +88,24 @@
             <td class="text-center"
                 onmouseover="onmouseoverStage(this)"
                 onmouseout="onmouseoutStage(this)">
-                <canvas th:id="${item.name} + '_stageView'"
+                <canvas th:id="${item.name} + '_stages'"
                         width="150"
                         height="10"
                         style="border:1px solid #000000;">
                     您的浏览器不支持 HTML5 canvas 标签。
                 </canvas>
                 <ul item-stage-view
-                    style="position: absolute;  margin-top: 1px; background: #D3D3D3; display: none; ">
-                    <li style="list-style-type:none; margin-top: 10px;">
-                        <span>此功能暂未开放!</span>
+                    style="position: absolute;  margin-top: 1px; background: #D3D3D3; display: none; white-space: pre; text-align: left;">
+                    <li style="list-style-type:none; margin: 10px; ">
+                        <span th:id="${item.name} + '_stage_desc'">...</span>
                     </li>
                 </ul>
             </td>
 
             <!-- Last Deployment Time -->
             <td class="text-center">
-                <div th:title="${item.lastRevCommit}">
                 <span th:id="${item.name} + '_lastDeploymentTime'"
                       th:text="${item.lastDeploymentTime == null ? '-' : #temporals.format(item.lastDeploymentTime,'yyyy-MM-dd HH:mm:ss')}"></span>
-                </div>
             </td>
         </tr>
     </table>
@@ -146,6 +146,8 @@
 
     // context-path
     const contextPath = [[${#httpServletRequest.getContextPath()}]] + '';
+
+    const items = [[${items}]];
 
 </script>
 
@@ -233,10 +235,10 @@
      * @param itemName 项目名
      * @param value 进度值，%
      */
-    function setItemStage(itemName, value) {
+    function setItemStage(itemName, value, diffStyle) {
         let width = 150;
         let height = 150;
-        let canvas = document.getElementById('id_canvas_' + itemName);
+        let canvas = document.getElementById(itemName + '_stages');
 
         // cur
         let curWidth = Math.trunc(width * value);
@@ -252,9 +254,53 @@
         // diff
         let diffWidth = width - curWidth;
         if (diffWidth > 0) {
-            ctx.fillStyle = '#FFFFFF';
+            if (!(diffStyle)) {
+                diffStyle = '#FFFFFF';
+            }
+            ctx.fillStyle = diffStyle;
             ctx.fillRect(curWidth, 0, diffWidth, height);
         }
+    }
+
+    function loadItemStage(itemInfo) {
+        let value = 0;
+        let stages = itemInfo.stages;
+        // console.log(stages);
+
+        let desc = stages[0].desc;
+        if (!(desc)) {
+            desc = '...';
+        }
+        $('#' + itemInfo.name + '_stage_desc').text(desc);
+
+        let length = stages.length;
+        for (let i = 0; i < length; i++) {
+            let stage = stages[i];
+            if (!(stage.startTime)) {
+                break;
+            }
+
+            if (!(stage.endTime)) {
+                break;
+            }
+
+            if (stage.endTime === -1) {
+                setItemStage(itemInfo.name, value, '#FF0000');
+                return;
+            }
+
+            if (i === length - 1) {
+                value = 1;
+            } else {
+                value += 100 / length / 100;
+            }
+        }
+        // console.log(value, itemInfo);
+        setItemStage(itemInfo.name, value);
+    }
+
+    function setLastDeploymentTime(itemInfo) {
+        $('#' + itemInfo.name + '_lastDeploymentTime').text(itemInfo.lastDeploymentTime);
     }
 
     // test
@@ -265,22 +311,32 @@
     //     // console.log(value);
     // }, 2000);
 
-</script>
+    // console.log('items', items);
+    for (let i = 0, length = items.length; i < length; i++) {
+        loadItemStage(items[i]);
+    }
 
+</script>
 
 <!-- WebSocket -->
 <script>
-    // let webSocket = new utilsModule.Utils.WebSocket('ws://localhost:8080/item', function (event) {
-    //     console.log('onopen', event);
-    // }, function (event) {
-    //     console.log('onmessage', event);
-    // }, function (event) {
-    //     console.log('onclose', event)
-    // }, function (event) {
-    //     console.log('error', event)
-    // });
-    // webSocket.connect();
-    // window._webSocket = webSocket;
+    let url = 'ws://' + window.location.host + '/item/websocket'
+    let webSocket = new utilsModule.Utils.WebSocket(url, function (event) {
+        // console.log('onopen', event);
+    }, function (event) {
+        // console.log('onmessage', event);
+        let itemInfo = JSON.parse(event.data);
+        // console.log('itemInfo', itemInfo);
+        setLastDeploymentTime(itemInfo);
+        loadItemStage(itemInfo);
+
+    }, function (event) {
+        // console.log('onclose', event)
+    }, function (event) {
+        // console.log('error', event)
+    });
+    webSocket.connect();
+    webSocket.windowOnbeforeunload();
 </script>
 
 <!-- item + -->

@@ -3,17 +3,15 @@ package org.auto.deploy.core.source;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.auto.deploy.core.ItemDeployer;
-import org.auto.deploy.core.ItemService;
-import org.auto.deploy.item.ItemInfo;
 import org.auto.deploy.util.Assert;
 import org.auto.deploy.util.DateUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -44,18 +42,16 @@ public class GitSource implements Source {
     private CredentialsProvider credentialsProvider;
     private Git git;
     private String commitId;
-
-    @Setter
-    private volatile boolean listenFlag;
+    private RevCommit lastRevCommit;
 
     public GitSource(Config config) {
         this.config = config;
-        this.listenFlag = true;
     }
 
+    @SneakyThrows
     @Override
     public boolean isChanged() {
-        return false;
+        return pull();
     }
 
     @Override
@@ -82,29 +78,20 @@ public class GitSource implements Source {
                 .setDirectory(tempFile)
                 .call();
 
-
-        RevCommit lastRevCommit = lastRevCommit();
-        print(lastRevCommit);
-        // 先临时这么写
-        ItemDeployer itemDeployer = (ItemDeployer) Thread.currentThread();
-        ItemInfo itemInfo = ItemService.getItemInfo(itemDeployer.getItemName());
-        StringBuilder lastRevCommitBuilder = new StringBuilder();
-        lastRevCommitBuilder.append("最新一次提交信息: ").append(lastRevCommit.getId());
-        lastRevCommitBuilder.append("\n\t").append("提交时间: ").append("\t").append(DateUtils.format(DateUtils.timestampToLocalDateTime(lastRevCommit.getCommitTime() * 1000L)));
-        lastRevCommitBuilder.append("\n\t").append("提交者标识: ").append("\t").append(lastRevCommit.getCommitterIdent());
-        lastRevCommitBuilder.append("\n\t").append("作者身份: ").append("\t").append(lastRevCommit.getAuthorIdent());
-        lastRevCommitBuilder.append("\n\t").append("提交信息: ").append("\t").append(lastRevCommit.getFullMessage());
-        itemInfo.setLastRevCommit(lastRevCommitBuilder.toString());
-        ItemService.writeItemInfo(itemDeployer.getItemName(), itemInfo);
+        // lastRevCommit
+        lastRevCommit = getLastRevCommit(git);
+        log.debug("最新一次提交信息: {}", getRevCommitStr(lastRevCommit));
 
         log.debug("已从git上clone代码到本地!\n\t{}", tempFile.getAbsolutePath());
         return tempFile;
     }
 
     /**
+     * pull
+     *
      * @return 是否是最新代码
      */
-    public synchronized boolean pull() throws Exception {
+    public synchronized boolean pull() throws IOException, GitAPIException {
         // repo
         Repository localRepo = git.getRepository();
 
@@ -114,38 +101,38 @@ public class GitSource implements Source {
         pullCommand.setRemoteBranchName(config.getBranch());
         pullCommand.call();
 
-        // log
-        RevWalk revWalk = new RevWalk(localRepo);
-        for (Ref ref : localRepo.getAllRefs().values()) {
-            revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
+        lastRevCommit = getLastRevCommit(git);
+        if (Objects.isNull(lastRevCommit)) {
+            return false;
         }
-        Iterator<RevCommit> iterator = revWalk.iterator();
-        if (iterator.hasNext()) {
-            RevCommit revCommit = iterator.next();
-            if (Objects.isNull(commitId) || commitId.equals(revCommit.getName())) {
-                if (Objects.isNull(commitId)) {
-                    commitId = revCommit.getName();
-                }
-                return false;
-            }
-            print(revCommit);
-            commitId = revCommit.getName();
-            return true;
+
+        if (Objects.isNull(commitId) || commitId.equals(lastRevCommit.getName())) {
+            commitId = lastRevCommit.getName();
+            return false;
         }
-        return false;
+
+        log.debug("最新一次提交信息: {}", getRevCommitStr(lastRevCommit));
+
+        commitId = lastRevCommit.getName();
+        return true;
     }
 
-    private void print(RevCommit revCommit) {
-        log.debug("最新一次提交信息: {}" +
-                        "\n\t提交时间:\t{}" +
-                        "\n\t提交者标识:\t{}" +
-                        "\n\t作者身份:\t{}" +
-                        "\n\t提交信息:\t{}",
-                revCommit.getId(),
-                DateUtils.format(DateUtils.timestampToLocalDateTime(revCommit.getCommitTime() * 1000L)),
-                revCommit.getCommitterIdent(),
-                revCommit.getAuthorIdent(),
-                revCommit.getFullMessage());
+    public String getLastRevCommitStr() {
+        return getRevCommitStr(lastRevCommit);
+    }
+
+    private static String getRevCommitStr(RevCommit revCommit) {
+        if (Objects.isNull(revCommit)) {
+            return null;
+        }
+
+        StringBuilder lastRevCommitStrBuilder = new StringBuilder();
+        lastRevCommitStrBuilder.append("\n\t").append("id: ").append("\t").append(revCommit.getId());
+        lastRevCommitStrBuilder.append("\n\t").append("提交时间: ").append("\t").append(DateUtils.format(DateUtils.timestampToLocalDateTime(revCommit.getCommitTime() * 1000L)));
+        lastRevCommitStrBuilder.append("\n\t").append("提交者标识: ").append("\t").append(revCommit.getCommitterIdent());
+        lastRevCommitStrBuilder.append("\n\t").append("作者身份: ").append("\t").append(revCommit.getAuthorIdent());
+        lastRevCommitStrBuilder.append("\n\t").append("提交信息: ").append("\t").append(revCommit.getFullMessage());
+        return lastRevCommitStrBuilder.toString();
     }
 
     /**
@@ -153,7 +140,7 @@ public class GitSource implements Source {
      *
      * @return
      */
-    private RevCommit lastRevCommit() throws IOException {
+    private static RevCommit getLastRevCommit(Git git) throws IOException {
         Repository localRepo = git.getRepository();
 
         // log

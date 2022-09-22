@@ -1,7 +1,7 @@
 package org.auto.deploy;
 
 import lombok.extern.slf4j.Slf4j;
-import org.auto.deploy.core.TaskScheduler;
+import org.auto.deploy.item.TaskScheduler;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationListener;

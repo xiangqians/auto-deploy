@@ -1,11 +1,12 @@
-package org.auto.deploy.core;
+package org.auto.deploy.item;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.auto.deploy.item.ItemInfo;
+import org.auto.deploy.core.Config;
+import org.auto.deploy.util.DateUtils;
 import org.auto.deploy.util.JacksonUtils;
 import org.springframework.util.Assert;
 import org.yaml.snakeyaml.Yaml;
@@ -175,6 +176,10 @@ public class ItemService {
     public static File getLogDir(String itemName) {
         File logDir = getFile(itemName, "log");
         return logDir;
+    }
+
+    public static String getLogRelativePath(String itemName, String logFileName) {
+        return ITEMS_PATHNAME + File.separator + itemName + File.separator + "log" + File.separator + logFileName;
     }
 
     public static File getFile(String itemName, String... fileNames) {

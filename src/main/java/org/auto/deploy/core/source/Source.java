@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 import lombok.Getter;
-import org.auto.deploy.core.Notice;
 
 import java.io.Closeable;
 import java.io.File;

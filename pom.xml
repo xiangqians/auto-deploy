@@ -66,12 +66,10 @@
     <dependencies>
 
         <!-- spring-boot-starter-websocket -->
-        <!--
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
-        -->
 
         <!-- spring-boot-starter-thymeleaf -->
         <dependency>

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * @date 23:27 2022/08/16
  */
 @Slf4j
-@RestControllerAdvice(basePackages = {"org.auto.deploy.core"})
+@RestControllerAdvice(basePackages = {"org.auto.deploy.item"})
 public class GlobalHandler {
 
     /**

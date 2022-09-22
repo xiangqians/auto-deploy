@@ -1,8 +1,9 @@
-package org.auto.deploy.core;
+package org.auto.deploy.item;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.auto.deploy.core.Config;
 import org.auto.deploy.core.build.Build;
 import org.auto.deploy.core.deployment.Deployment;
 import org.auto.deploy.core.deployment.jar.JarDeployment;
@@ -12,12 +13,13 @@ import org.auto.deploy.core.server.Server;
 import org.auto.deploy.core.source.GitSource;
 import org.auto.deploy.core.source.LocalSource;
 import org.auto.deploy.core.source.Source;
-import org.auto.deploy.item.ItemInfo;
 import org.auto.deploy.util.DateUtils;
+import org.auto.deploy.util.JacksonUtils;
 
-import java.io.File;
+import java.io.Flushable;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 
@@ -28,18 +30,23 @@ import java.util.concurrent.ScheduledFuture;
  * @date 00:03 2022/09/19
  */
 @Slf4j
-public class ItemDeployer extends Thread {
+@Getter
+public class ItemDeployer extends Thread implements Flushable {
 
     // 项目名
-    @Getter
     private String itemName;
 
     // 开启资源监听
 //    @Setter
     private volatile boolean enableSourceMonitoring;
 
-    @Getter
-    private volatile String logPathName;
+    private volatile ItemInfo itemInfo;
+    private volatile LocalDateTime lastDeploymentTime;
+    private volatile String logRelativePath;
+    private volatile ItemStage serverStage;
+    private volatile ItemStage sourceStage;
+    private volatile ItemStage buildrStage;
+    private volatile ItemStage deploymentStage;
 
     public ItemDeployer(String itemName) {
         super(itemName);
@@ -57,11 +64,8 @@ public class ItemDeployer extends Thread {
         ScheduledFuture<?> scheduledFuture = null;
         try {
             do {
-                LocalDateTime lastDeploymentTime = LocalDateTime.now();
-                logPathName = "items" + File.separator + itemName + File.separator + "log" + File.separator + DateUtils.format(lastDeploymentTime, "yyyy-MM-dd_HHmmss") + ".log";
-                ItemInfo itemInfo = ItemService.getItemInfo(itemName);
-                itemInfo.setLastDeploymentTime(lastDeploymentTime);
-                ItemService.writeItemInfo(itemName, itemInfo);
+                // initIemInfo
+                initIemInfo();
 
                 // config
                 Config config = getConfig();
@@ -125,24 +129,56 @@ public class ItemDeployer extends Thread {
         Build build = null;
         Server server = null;
         Deployment deployment = null;
+        ItemStage curStage = null;
         try {
+            // source
+            curStage = sourceStage;
+            curStage.setStartTime(System.currentTimeMillis());
+            flush();
+            source.get();
+            if (source instanceof GitSource) {
+                String lastRevCommitStr = ((GitSource) source).getLastRevCommitStr();
+                curStage.setDesc("\n最新一次提交信息: " + lastRevCommitStr);
+            }
+            curStage.setEndTime(System.currentTimeMillis());
+            flush();
+
             // build
+            curStage = buildrStage;
+            curStage.setStartTime(System.currentTimeMillis());
+            flush();
             build = getBuild(config, source);
             build(build);
+            curStage.setEndTime(System.currentTimeMillis());
+            flush();
 
             // server
+            curStage = serverStage;
+            curStage.setStartTime(System.currentTimeMillis());
+            flush();
             server = getServer(config);
             // 连接到服务
             server.connect();
+            curStage.setEndTime(System.currentTimeMillis());
+            flush();
 
             // deployment
+            curStage = deploymentStage;
+            curStage.setStartTime(System.currentTimeMillis());
+            flush();
             deployment = getDeployment(config, server, source);
             log.debug("部署中 ...");
             deployment.deploy();
             log.debug("已部署!");
+            curStage.setEndTime(System.currentTimeMillis());
+            flush();
 
+        } catch (Exception e) {
+            curStage.setEndTime(-1L);
+            throw e;
         } finally {
             IOUtils.closeQuietly(deployment, server, build);
+            flush();
         }
     }
 
@@ -208,6 +244,33 @@ public class ItemDeployer extends Thread {
         config.validate();
         log.debug("已初始化 config!\n{}", config);
         return config;
+    }
+
+    private void initIemInfo() throws IOException {
+        // getItemInfo
+        itemInfo = ItemService.getItemInfo(itemName);
+
+        // 获取部署时间和日志相对路径
+        lastDeploymentTime = LocalDateTime.now();
+        logRelativePath = ItemService.getLogRelativePath(itemName, DateUtils.format(lastDeploymentTime, "yyyy-MM-dd_HHmmss") + ".log");
+
+        // 重新设置 itemInfo
+        itemInfo.setName(itemName);
+        sourceStage = new ItemStage("拉取资源");
+        buildrStage = new ItemStage("构建");
+        serverStage = new ItemStage("连接服务");
+        deploymentStage = new ItemStage("部署");
+        itemInfo.setStages(List.of(sourceStage, buildrStage, serverStage, deploymentStage));
+        itemInfo.setLastDeploymentTime(lastDeploymentTime);
+
+        // flush
+        flush();
+    }
+
+    @Override
+    public void flush() throws IOException {
+        ItemService.writeItemInfo(itemName, itemInfo);
+        ItemWebSocketManager.broadcast(JacksonUtils.toJson(itemInfo));
     }
 
 }
