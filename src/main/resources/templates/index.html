@@ -277,17 +277,17 @@
         for (let i = 0; i < length; i++) {
             let stage = stages[i];
             // console.log('stage[' + i + ']', stage);
-            let tooltipText = new TooltipText((i + 1) + '、【' + stage.name+'】');
+            let tooltipText = new TooltipText((i + 1) + '、【' + stage.name + '】');
             tooltipTextBuilder.push(tooltipText);
             tooltipText.append('耗时：');
             if (!(stage.startTime)) {
                 tooltipText.append('-');
-                break;
+                continue;
             }
 
             if (!(stage.endTime)) {
                 tooltipText.append('-');
-                break;
+                continue;
             }
 
             let timeMillis = stage.endTime - stage.startTime;
@@ -299,7 +299,7 @@
 
             if (stage.endTime === -1) {
                 setItemStage(itemInfo.name, value, '#FF0000');
-                return;
+                continue;
             }
 
             if (i === length - 1) {
