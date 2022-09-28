@@ -21,11 +21,6 @@ public class ItemStage {
     private String name;
 
     /**
-     * 项目阶段描述
-     */
-    private String desc;
-
-    /**
      * 项目阶段开始时间戳
      */
     private Long startTime;
@@ -34,6 +29,8 @@ public class ItemStage {
      * 项目阶段结束时间戳
      */
     private Long endTime;
+
+    private String message;
 
     public ItemStage(String name) {
         this.name = name;

@@ -85,27 +85,20 @@
             </td>
 
             <!-- Stage View -->
-            <td class="text-center"
-                onmouseover="onmouseoverStage(this)"
-                onmouseout="onmouseoutStage(this)">
+            <td class="text-center">
                 <canvas th:id="${item.name} + '_stages'"
                         width="150"
                         height="10"
                         style="border:1px solid #000000;">
                     您的浏览器不支持 HTML5 canvas 标签。
                 </canvas>
-                <ul item-stage-view
-                    style="position: absolute;  margin-top: 1px; background: #D3D3D3; display: none; white-space: pre; text-align: left;">
-                    <li style="list-style-type:none; margin: 10px; ">
-                        <span th:id="${item.name} + '_stage_desc'">...</span>
-                    </li>
-                </ul>
             </td>
 
             <!-- Last Deployment Time -->
             <td class="text-center">
                 <span th:id="${item.name} + '_lastDeploymentTime'"
-                      th:text="${item.lastDeploymentTime == null ? '-' : #temporals.format(item.lastDeploymentTime,'yyyy-MM-dd HH:mm:ss')}"></span>
+                      th:text="${item.lastDeploymentTime == null ? '-' : #temporals.format(item.lastDeploymentTime,'yyyy-MM-dd HH:mm:ss')}"
+                      th:title="${item.lastRevCommitMessage}"></span>
             </td>
         </tr>
     </table>
@@ -154,9 +147,7 @@
 <!-- item -->
 <script>
 
-    function item(element) {
-        let $element = $(element);
-
+    function logList($element) {
         // log list
         let itemName = $element.attr('name');
         let url = contextPath + '/item/' + itemName + "/log/list";
@@ -176,6 +167,11 @@
         }, function (resp) {
             alert(JSON.stringify(resp))
         });
+    }
+
+    function item(element) {
+        let $element = $(element);
+        logList($element);
 
         // uls
         let $ul = $element.next();
@@ -217,17 +213,8 @@
 <!-- Stage View -->
 <script>
 
-    function onmouseoverStage(element) {
-        // console.log('element', element)
-        let $ul = $(element).find('ul[item-stage-view]:first');
-        // console.log('$ul', $ul);
-        $ul.css('display', 'block');
-    }
-
-    function onmouseoutStage(element) {
-        let $uls = $.find('ul[item-stage-view]');
-        // console.log('$uls', $uls);
-        $uls.forEach(_ul => $(_ul).css('display', 'none'));
+    function getStagesViewCanvas(itemName) {
+        return document.getElementById(itemName + '_stages');
     }
 
     /**
@@ -238,7 +225,7 @@
     function setItemStage(itemName, value, diffStyle) {
         let width = 150;
         let height = 150;
-        let canvas = document.getElementById(itemName + '_stages');
+        let canvas = getStagesViewCanvas(itemName);
 
         // cur
         let curWidth = Math.trunc(width * value);
@@ -262,27 +249,53 @@
         }
     }
 
+    function TooltipText(text) {
+        this.value = [];
+        this.append(text);
+    }
+
+    TooltipText.prototype.append = function (text) {
+        this.value.push(text);
+        return this;
+    }
+
+    TooltipText.prototype.toString = function () {
+        return this.value.join('');
+    }
+
     function loadItemStage(itemInfo) {
         let value = 0;
         let stages = itemInfo.stages;
         // console.log(stages);
-
-        let desc = stages[0].desc;
-        if (!(desc)) {
-            desc = '...';
+        if (!(stages)) {
+            return;
         }
-        $('#' + itemInfo.name + '_stage_desc').text(desc);
 
+        let tooltipTextBuilder = [];
+        let totalTimeMillis = 0;
         let length = stages.length;
         for (let i = 0; i < length; i++) {
             let stage = stages[i];
+            // console.log('stage[' + i + ']', stage);
+            let tooltipText = new TooltipText((i + 1) + '、' + stage.name);
+            tooltipTextBuilder.push(tooltipText);
+            tooltipText.append('耗时：');
             if (!(stage.startTime)) {
+                tooltipText.append('-');
                 break;
             }
 
             if (!(stage.endTime)) {
+                tooltipText.append('-');
                 break;
             }
+
+            let timeMillis = stage.endTime - stage.startTime;
+            totalTimeMillis += timeMillis;
+            tooltipText.append(timeMillis).append('ms');
+            tooltipText.append('（');
+            tooltipText.append((timeMillis / 1000).toFixed(2)).append('s');
+            tooltipText.append('）');
 
             if (stage.endTime === -1) {
                 setItemStage(itemInfo.name, value, '#FF0000');
@@ -297,10 +310,22 @@
         }
         // console.log(value, itemInfo);
         setItemStage(itemInfo.name, value);
+
+        tooltipTextBuilder.push(new TooltipText("总耗时：").append(totalTimeMillis).append('ms').append("（").append((totalTimeMillis / 1000).toFixed(2)).append("s").append("）"));
+
+        // set tooltip text
+        let canvas = getStagesViewCanvas(itemInfo.name);
+        // console.log('tooltipTextBuilder', tooltipTextBuilder);
+        canvas.title = tooltipTextBuilder.join('\n');
     }
 
-    function setLastDeploymentTime(itemInfo) {
-        $('#' + itemInfo.name + '_lastDeploymentTime').text(itemInfo.lastDeploymentTime);
+    function setLastXxx(itemInfo) {
+        let $lastDeploymentTime = $('#' + itemInfo.name + '_lastDeploymentTime');
+        $lastDeploymentTime.text(itemInfo.lastDeploymentTime);
+        $lastDeploymentTime.attr('title', itemInfo.lastRevCommitMessage);
+
+        let $element = $('a[name=' + itemInfo.name + ']');
+        logList($element);
     }
 
     // test
@@ -327,7 +352,7 @@
         // console.log('onmessage', event);
         let itemInfo = JSON.parse(event.data);
         // console.log('itemInfo', itemInfo);
-        setLastDeploymentTime(itemInfo);
+        setLastXxx(itemInfo);
         loadItemStage(itemInfo);
 
     }, function (event) {

@@ -138,7 +138,7 @@ public class ItemDeployer extends Thread implements Flushable {
             source.get();
             if (source instanceof GitSource) {
                 String lastRevCommitStr = ((GitSource) source).getLastRevCommitStr();
-                curStage.setDesc("\n最新一次提交信息: " + lastRevCommitStr);
+                itemInfo.setLastRevCommitMessage("\n最新一次提交信息: " + lastRevCommitStr);
             }
             curStage.setEndTime(System.currentTimeMillis());
             flush();
@@ -257,11 +257,12 @@ public class ItemDeployer extends Thread implements Flushable {
         // 重新设置 itemInfo
         itemInfo.setName(itemName);
         sourceStage = new ItemStage("拉取资源");
-        buildrStage = new ItemStage("构建");
+        buildrStage = new ItemStage("构建资源");
         serverStage = new ItemStage("连接服务");
-        deploymentStage = new ItemStage("部署");
+        deploymentStage = new ItemStage("部署项目");
         itemInfo.setStages(List.of(sourceStage, buildrStage, serverStage, deploymentStage));
         itemInfo.setLastDeploymentTime(lastDeploymentTime);
+        itemInfo.setLastRevCommitMessage(null);
 
         // flush
         flush();

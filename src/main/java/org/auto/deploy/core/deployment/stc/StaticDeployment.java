@@ -63,7 +63,9 @@ public class StaticDeployment extends AbstractDeployment {
             }
         };
         Arrays.stream(pkgFiles).forEach(fileConsumer);
-        Arrays.stream(addlFiles).forEach(fileConsumer);
+        if (Objects.nonNull(addlFiles)) {
+            Arrays.stream(addlFiles).forEach(fileConsumer);
+        }
     }
 
     @Override

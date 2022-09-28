@@ -29,4 +29,5 @@ public class ItemInfo {
      */
     private LocalDateTime lastDeploymentTime;
 
+    private String lastRevCommitMessage;
 }
