@@ -277,7 +277,7 @@
         for (let i = 0; i < length; i++) {
             let stage = stages[i];
             // console.log('stage[' + i + ']', stage);
-            let tooltipText = new TooltipText((i + 1) + '、' + stage.name);
+            let tooltipText = new TooltipText((i + 1) + '、【' + stage.name+'】');
             tooltipTextBuilder.push(tooltipText);
             tooltipText.append('耗时：');
             if (!(stage.startTime)) {
@@ -345,9 +345,10 @@
 
 <!-- WebSocket -->
 <script>
+
     let url = 'ws://' + window.location.host + '/item/websocket'
     let webSocket = new utilsModule.Utils.WebSocket(url, function (event) {
-        // console.log('onopen', event);
+        console.log('onopen', event);
     }, function (event) {
         // console.log('onmessage', event);
         let itemInfo = JSON.parse(event.data);
@@ -356,12 +357,28 @@
         loadItemStage(itemInfo);
 
     }, function (event) {
-        // console.log('onclose', event)
+        console.log('onclose', event);
+        reconnect();
     }, function (event) {
-        // console.log('error', event)
+        console.log('error', event);
+        reconnect();
     });
     webSocket.connect();
     webSocket.windowOnbeforeunload();
+
+    let hasReconnectTaskFlag = false;
+
+    function reconnect() {
+        if (!hasReconnectTaskFlag) {
+            hasReconnectTaskFlag = true;
+            setTimeout(function () {
+                console.log('尝试重新连接 ...');
+                webSocket.connect();
+                hasReconnectTaskFlag = false;
+            }, 2000); // ms
+        }
+    }
+
 </script>
 
 <!-- item + -->

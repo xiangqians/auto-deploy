@@ -254,6 +254,7 @@ function UtilsModule() {
 
         // 连接关闭的回调方法
         self.webSocket.onclose = function (event) {
+            self.webSocket = null;
             if (self.onclose) {
                 self.onclose(event);
             }
@@ -261,6 +262,7 @@ function UtilsModule() {
 
         // 连接发生错误的回调方法
         self.webSocket.onerror = function (event) {
+            self.webSocket = null;
             if (self.error) {
                 self.error(event);
             }
