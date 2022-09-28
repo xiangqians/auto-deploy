@@ -23,7 +23,7 @@ public class ItemWebSocket {
 
     @OnOpen
     public void onOpen(Session session) {
-        log.info("{} 连接成功", session.getId());
+        log.info("id={} 连接成功", session.getId());
         this.session = session;
         this.id = session.getId();
         ItemWebSocketManager.add(this);
@@ -31,14 +31,14 @@ public class ItemWebSocket {
 
     @OnClose
     public void onClose(Session session) {
-        log.info("{} 连接断开", session.getId());
+        log.info("id={} 连接断开", session.getId());
         this.session = null;
         ItemWebSocketManager.remove(this);
     }
 
     @OnMessage
     public String onMessage(Session session, String message) {
-        log.info("{}, {}", session.getId(), message);
+        log.info("id={}, message={}", session.getId(), message);
         return "server: undefined";
     }
 
@@ -56,3 +56,21 @@ public class ItemWebSocket {
     }
 
 }
+//org.eclipse.jetty.websocket.api.CloseException: java.util.concurrent.TimeoutException: Idle timeout expired: 300003/300000 ms
+//	at org.eclipse.jetty.websocket.common.io.AbstractWebSocketConnection.onReadTimeout(AbstractWebSocketConnection.java:564)
+//	at org.eclipse.jetty.io.AbstractConnection.onFillInterestedFailed(AbstractConnection.java:172)
+//	at org.eclipse.jetty.websocket.common.io.AbstractWebSocketConnection.onFillInterestedFailed(AbstractWebSocketConnection.java:539)
+//	at org.eclipse.jetty.io.AbstractConnection$ReadCallback.failed(AbstractConnection.java:317)
+//	at org.eclipse.jetty.io.FillInterest.onFail(FillInterest.java:140)
+//	at org.eclipse.jetty.io.AbstractEndPoint.onIdleExpired(AbstractEndPoint.java:407)
+//	at org.eclipse.jetty.io.IdleTimeout.checkIdleTimeout(IdleTimeout.java:171)
+//	at org.eclipse.jetty.io.IdleTimeout.idleCheck(IdleTimeout.java:113)
+//	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:515)
+//	at java.base/java.util.concurrent.FutureTask.run$$$capture(FutureTask.java:264)
+//	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java)
+//	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:304)
+//	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)
+//	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
+//	at java.base/java.lang.Thread.run(Thread.java:835)
+//Caused by: java.util.concurrent.TimeoutException: Idle timeout expired: 300003/300000 ms
+//	... 9 common frames omitted
